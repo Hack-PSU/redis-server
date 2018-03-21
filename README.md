@@ -68,11 +68,11 @@ npm install
 
 > The database, if empty, is seeded with an admin user - username: *ad@min.com* / password: *admin*
 
-##Todo
+## Todo
 
-- (todo) Setup unit tests
-- (todo) Setup proper security (ssl, proper auth workflow)
-- todo: implement csrf
+- Setup unit tests
+- Setup proper security (ssl, proper auth workflow)
+- Implement csrf
 
 ## Development Workflow
 
