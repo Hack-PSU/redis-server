@@ -1,8 +1,6 @@
 ## Node + Express + Redis
 
-[![Build Status]]
 
-[![Coverage Status]]
 
 This is a template for you to use on your Redis Caching Server. Follow the directions below to get started.
 
@@ -14,15 +12,58 @@ The back-end API includes:
 
 ## Quick Start
 
+### Using Docker
 1. Clone and install dependencies
 1. Update the config:
   - Rename the *.env_sample* file to *.env* and update
-1. Run the app - `npm start` or `gulp`
+1. Run the app - `docker-compose up -d --build`
 
-### Pranav
+#### Some useful docker commands:
+Use this to rebuild containers and have it pull from Github:
+```
+docker-compose build --no-cache [container if necessary]
+```
 
-1. docker-compose build --no-cache
-1. docker build -t ubuntu_web --no-cache .
+To rebuild and redeploy only web container when redis is up:
+```
+docker-compose up -d --build web
+```
+
+To just restart it… call this:
+```
+docker-compose restart web
+```
+To just start and stop all of the instances (and preserve data):
+```
+docker-compose start
+docker-compose stop
+```
+
+### Using NPM & Redis Directly
+1. Install Redis (skip if already done):
+```
+    sudo apt-get update
+    sudo apt-get install build-essential tcl
+    cd /tmp
+    curl -O http://download.redis.io/redis-stable.tar.gz
+    tar xzvf redis-stable.tar.gz
+    cd redis-stable
+    make
+    sudo make install
+    ```
+1. Run Redis Server (skip if already done):
+```
+redis-server
+```
+1. Clone and install dependencies:
+```
+git clone [link to repo]
+cd redis-server
+npm install
+```
+1. Update the config:
+  - Rename the *.env_sample* file to *.env* and update
+1. Run the app - `npm start`
 
 > The database, if empty, is seeded with an admin user - username: *ad@min.com* / password: *admin*
 
