@@ -50,7 +50,8 @@ docker-compose stop
     cd redis-stable
     make
     sudo make install
-    ```
+```
+
 1. Run Redis Server (skip if already done):
 ```
 redis-server
