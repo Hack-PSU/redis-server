@@ -6,14 +6,47 @@
 {% block content %}
 
 <div class="container">
-  <h1>Profile</h1>
-  {% if user %}
+    <h1>Profile</h1>
+    {% if user %}
     <p class="lead">Welcome, {{user.email}}!</p>
-  {% endif %}
-  <a href="/">Go home</a>
-  {% if user %}
+    {% endif %}
+    <a href="/">Go home</a>
+    <br>
+    {% if user %}
 
-  {% endif %}
+    {% endif %}
+    <div class="col-xs-4"></div>
+    <div class="col-xs-4" style="text-align: center;">
+
+        <h3 style="text-align: left;">DB Management:</h3>
+
+        <br>
+        <a href="/tabs/updatedb"><button class="btn btn-primary">Update DB</button></a>
+        <br><br>
+        <a href="/tabs/updatedb"><button class="btn btn-primary">Update DB</button></a>
+        <br><br>
+        <a href="/tabs/updatedb"><button class="btn btn-primary">Update DB</button></a>
+        <br><br>
+        <a href="/tabs/updatedb"><button class="btn btn-primary">Update DB</button></a>
+        <br><br>
+        <a href="/tabs/updatedb"><button class="btn btn-primary">Update DB</button></a>
+        <br><br>
+        <!--
+        <form id="add-product-form">
+            <div class="form-group">
+                <label for="product-name">Product Name</label>
+                <input type="text" class="form-control" id="product-name" placeholder="Enter a product" required="">
+            </div>
+            <div class="form-group">
+                <label for="product-price">Product Price</label>
+                <input type="number" step="0.01" class="form-control" id="product-price" placeholder="Enter a price" required="">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <br>
+        <p id="product-response"></p>-->
+
+    </div>
 
 </div>
 
