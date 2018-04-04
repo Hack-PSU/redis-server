@@ -106,8 +106,11 @@ $ npm run cov
 
 ### Tabs
 
-- POST `/tabs/setup` - Setup user with tab of
-- POST `/tabs/add` - increment counter to # of scans for RFID
+- POST `/tabs/setup` - Associate user with rfid tag
+- GET `/tabs/updatedb` - Pull user data from remote DB to redis cache
+- POST `/tabs/add` - increment counter to # of scans for RFID & food
+- POST `/tabs/getpin` - pull user information from pin
+- GET `/tabs/resetcounter` - reset all food counters to 0
 
 
 
