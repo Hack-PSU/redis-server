@@ -10,74 +10,9 @@ var redis = require('../../lib/redis');
 var request = require("request-promise-native");
 var serverOptions = require('../../lib/remoteServer');
 // using redis, create, edit and delete tabs
-//(todo) set up authentication for each merchant to access redis (NO ONE ELSE)
-
-//commands for redis
-/*
-create
-(create)
- HMSET tab:MerchantID.UserID userID "<UserID>" merchantID "<MerchantID>" tabTotal <total tab money spent> Products "[{productID: \"product3\", name: \"product3\", time: { type: Date, default: Date.now }}]"
-
-    (add to running list) so its searchable...
-    SADD tabs:MerchantID MerchantID.UserID
-
- (get)
- HMGET tab:MerchantID.UserID tabTotal merchantID Products etc.
-
-(search for tabs that are associated with a merchant)
- SSCAN tabs 0 MATCH MerchantID*
-
- (delete)
-  DEL tab:MerchantID.UserID
-    (delete from running list) so its no longer searched...
-    SREM users "MerchantID.UserID"
-
-    tabs: {
-        MerchantID : {
-            userID1 : {
-                userID: "",
-                merchantID: "",
-                tabTotal: 0,
-                numProducts: 0,
-                Products: [
-                    {
-                        productID: "",
-                        name: "",
-                        time: "Date.now"
-                    },
-                    {
-                        productID: "",
-                        name: "",
-                        time: "Date.now"
-                    }
-                ]
-            },
-            userID2 : {
-                userID: "",
-                merchantID: "",
-                tabTotal: 0,
-                numProducts 0,
-                Products: [
-                    {
-                        productID: "",
-                        name: "",
-                        time: "Date.now"
-                    },
-                    {
-                        productID: "",
-                        name: "",
-                        time: "Date.now"
-                    }
-                ]
-            }
-        }
-    }
 
 
 
-
-
- */
 //todo: move queues to redis
 var unsent_scans = [];
 var unsent_assignments = [];
