@@ -100,7 +100,7 @@ router.post('/setup', function(req, res, next) {
         //});
     var userRFID = req.body.id;
     //we know pin exists
-    var pin = req.body.pin;
+    var pin = parseInt(req.body.pin, 14);
 
     console.log("OPENING TAB WITH USER: " + userRFID);
     console.log("WE HAVE PIN: " + pin);
@@ -115,12 +115,12 @@ router.post('/setup', function(req, res, next) {
                         message: 'Something went wrong'
                     });
             }else {
-                console.log("This is what we found when checking if tab is already open");
+                console.log("TAB ALREADY OPEN");
                 console.dir(obj);
                 if (obj) {
-                    res.status(200)
+                    res.status(500)
                         .json({
-                            status: 'success',
+                            status: 'error',
                             data: obj,
                             message: 'Already Opened.'
                         });
@@ -185,6 +185,40 @@ router.post('/setup', function(req, res, next) {
 
     });
 
+//check if pin exists
+router.post('/getpin', function(req, res, next) {
+
+    var pin = parseInt(req.body.pin, 14);
+    console.log("PIN IS: " + pin);
+    redis.hgetall(pin, function (err, obj) {
+        if (err) {
+            res.status(500)
+                .json({
+                    status: 'error',
+                    data: err,
+                    message: 'Does not exist or already set.'
+                });
+        } else {
+            console.dir(obj);
+            if (obj) {
+                res.status(200)
+                    .json({
+                        status: 'success',
+                        data: obj,
+                        message: 'Found.'
+                    });
+            } else {
+                res.status(401)
+                    .json({
+                        status: 'error',
+                        data: obj,
+                        message: 'Did not find anything.'
+                    });
+            }
+        }
+    });
+});
+
 
 router.get('/updatedb', function(req, res, next) {
     //var store = new Store({
@@ -197,7 +231,6 @@ router.get('/updatedb', function(req, res, next) {
     request(options)
         .then(function (response) {
             // Request was successful, use the response object at will
-            console.log(response);
             //do redis stuff then
             //todo: this is being treated synchronously when it's not synchronous fix with promises
             var numErrors = 0;
@@ -230,28 +263,6 @@ router.get('/updatedb', function(req, res, next) {
                 );
 
             });
-            /*
-            for(var i = 0;  i < response.length; i++){
-                redis.hmset(response[i].pin, {
-                    "uid": response[i].uid,
-                    "pin": response[i].pin || "NULL",
-                    "name": response[i].firstname + ' ' + response[i].lastname,
-                    "shirtSize": response[i].shirt_size,
-                    "diet": response[i].dietary_restriction || "NULL",
-                    "counter": 0,
-                    "numScans": 0
-
-                }, function(err, reply) {
-                    // reply is null when the key is missing
-                    if (err) {
-                        //todo: make queue to reinsert into db
-                        numErrors++;
-                        console.log("ERROR inserting into db: " + err);
-                    } else {
-                        console.log("Successfully opened tab with info!");
-                    }
-                });
-            }*/
 
             //run promises
             Promise.all(promises).then(function(){
@@ -297,12 +308,12 @@ router.post('/add', function(req, res, next) {
     //    'name': req.body.name,
     //    'description': req.body.description,
     //});
-    var location = req.body.piid;
+    var location = req.body.location;
     var userRFID = req.body.id;
-    //apparently location isn't readable: will look something like this: 0e55dd370be84d68b9e02d9642061de0
-    console.log("Scanned RFID: " + userRFID + "\n with pi ID: " + location);
 
-    //send to server asynchronously
+    //console.log("Scanned RFID: " + userRFID + "\n with pi ID: " + location);
+
+    //setup sending to server asynchronously
     var scan = {
         "rfid_uid": userRFID,
         "scan_location": location,
@@ -318,23 +329,14 @@ router.post('/add', function(req, res, next) {
     };
 
     console.log("UNSENT SCANS: " + JSON.stringify(unsent_scans));
-    //todo:worry about promises and mutli data usage
-    request(options).then(function (response) {
-        //empty list of unsent scans
-        console.dir("SUCCESS: " + response);
-        unsent_scans = [];
-    }).catch(function (err) {
-        // Something bad happened, handle the error
-        console.log(err);
-        //do not remove unsent scans
-    });
 
 
-    //todo: if redis.exists(tabkey) then throw danger error.
-    //could mean that they are trying to override their currently open tab...
+    //todo: if redis.exists(tabkey) doesn't exist then throw danger error.
+    //They haven't registered and it'll still go through but make a seperate location for this.
+    //need to throw an error that doesn't exist
     //redis.hget(tabKey, "numProducts", function (err, reply) {
     //add to redis
-    if(location == "Atrium"){
+    if(location == process.env.FOOD){
         redis.HINCRBY(userRFID, "counter", 1, function (err, obj) {
             if(err){
                 res.status(500)
@@ -344,8 +346,19 @@ router.post('/add', function(req, res, next) {
                         message: 'Something went wrong'
                     });
             }else {
-                console.log("Incrementing counter for # times RFID has been scanned for food");
-                console.dir(obj);
+                //actually send to server now that we know it exists
+                //todo:worry about promises and mutli data usage
+                request(options).then(function (response) {
+                    //empty list of unsent scans
+                    console.dir("SUCCESS: " + response);
+                    unsent_scans = [];
+                }).catch(function (err) {
+                    // Something bad happened, handle the error
+                    console.log(err);
+                    //do not remove unsent scans
+                });
+
+                console.log("Incrementing FOOD counter");
                 if (obj) {
                     redis.hgetall(userRFID, function (err, user) {
                         console.dir(user);
@@ -395,8 +408,19 @@ router.post('/add', function(req, res, next) {
                         message: 'Something went wrong'
                     });
             }else {
-                console.log("Incrementing numScans for # times RFID has been scanned");
-                console.dir(obj);
+                //actually send to server now that we know it exists
+                //todo:worry about promises and mutli data usage
+                request(options).then(function (response) {
+                    //empty list of unsent scans
+                    console.dir("SUCCESS: " + response);
+                    unsent_scans = [];
+                }).catch(function (err) {
+                    // Something bad happened, handle the error
+                    console.log(err);
+                    //do not remove unsent scans
+                });
+
+                console.log("Incrementing numScans counter");
                 if (obj) {
 
                     var numScans = parseInt(obj.toString()) - 1;
@@ -404,7 +428,6 @@ router.post('/add', function(req, res, next) {
                     var scanTimeKey = "Scan." + numScans + ".time";
                     var data = {};
                     var date = scan.scan_time;
-                    console.log("DATE: "+ date);
                     data[scanLocKey] = location;
                     data[scanTimeKey] = date;
                     redis.hmset(userRFID, data, function(err, reply) {
@@ -454,7 +477,7 @@ router.post('/add', function(req, res, next) {
 
 router.get('/name', function(req, res, next) {
 
-    var location = req.body.piid.toString();
+    var location = req.body.location.toString();
     var userRFID = req.body.id;
     //this is the index number of the item we would like to remove from the tab
     //test output
@@ -486,7 +509,7 @@ router.get('/name', function(req, res, next) {
 
 router.get('/shirtSize', function(req, res, next) {
 
-    var location = req.body.piid.toString();
+    var location = req.body.location.toString();
     var userRFID = req.body.id;
     //this is the index number of the item we would like to remove from the tab
     //test output
@@ -509,7 +532,7 @@ router.get('/shirtSize', function(req, res, next) {
 
 router.get('/diet', function(req, res, next) {
 
-    var location = req.body.piid.toString();
+    var location = req.body.location.toString();
     var userRFID = req.body.id;
     //this is the index number of the item we would like to remove from the tab
     //test output
@@ -529,102 +552,69 @@ router.get('/diet', function(req, res, next) {
 
 
 });
+var cursor = '0';
+function scan(pattern, keys, callback){
 
-/*
-keys   for index 0
- Products.0.productID = ProductID
- Products.0.time = Date.now
- */
+    redis.scan(cursor, 'MATCH',pattern,'COUNT', '1000', function(err, reply){
+        if(err){
+            throw err;
+        }
+        cursor = reply[0];
+        keys.push.apply(keys, reply[1]);
+        if(cursor === '0'){
+            return callback(keys);
+        }else{
+
+            return scan(pattern, keys, callback);
+        }
+    });
+}
 
 
-//get all tabs w/ merchantID
-//what information should we return?
-router.post('/getall', helpers.ensureMerchantAuthenticated,
-    function(req, res, next) {
+router.get('/resetcounter', function(req, res, next) {
 
-        var merchantID = req.user._id.toString();
+    //this is the index number of the item we would like to remove from the tab
+    //test output
+    var data = [];
+    scan('*', data, function(keys){
+        //great
+        //redis.batch().exec();
+        //build 2d array of commands
+        //['hset', 'key(rfid)', 'counter', '0']
+        var commands = [];
+        for(var i=0; i < keys.length; i++){
+            var command = ["hset", "", "counter", "0"];
+            command[1] = keys[i];
+            commands.push(command);
+        }
 
-        //this is the index number of the item we would like to remove from the tab
+        //pass in and run the commands
+        redis.batch(commands)
+            .exec(function (err, replies) {
+                if(err){
+                    console.log("ERR: " + err);
 
-        console.log("Getting all tabs for MERCHANT: " + merchantID);
-
-        var tabsKey = "tabs:" + merchantID;
-        redis.smembers(tabsKey, function (err, reply) {
-            if(err){
-                return next(err);
-            }
-            else {
-                var allTabs = reply;
-                console.log("All tabs: " + allTabs);
-                res.status(200)
-                    .json({
-                        status: 'success',
-                        data: allTabs,
-                        message: 'Retrieved all tabs from merchant.'
+                    req.flash('message', {
+                        status: 'danger',
+                        value: 'Some resets in redis failed.'
                     });
-            }
-        });
+                    return res.redirect('/');
+                }else{
+                    console.log("Success in setting to 0.");
+                    //success
+                    req.flash('message', {
+                        status: 'success',
+                        value: 'Successfully reset counters for all users in redis.'
+                    });
+                    return res.redirect('/');
 
+                }
+            });
 
     });
 
 
-//get tab info for user w/ userID like tabTotal and products bought
-//passing in merchantID for this specific user
-router.get('/tab/:id', requireAuth,
-    function(req, res, next) {
-
-        var userID = req.user._id.toString();
-        var merchantID = req.params.id;
-        //this is the index number of the item we would like to remove from the tab
-
-        var tabKey = "tab:" + merchantID + "." + userID;
-        //test output
-        redis.hgetall(tabKey, function (err, obj) {
-            if(err){
-                return next(err);
-            }else {
-                console.dir(obj);
-                res.status(200)
-                    .json({
-                        status: 'success',
-                        data: obj,
-                        message: 'Retrieved tab.'
-                    });
-            }
-        });
-
-
-    });
-
-//get User for merchant to populate information on bartender dashboard
-//passing in userID
-router.get('/user/:id', helpers.ensureMerchantAuthenticated,
-    function(req, res, next) {
-
-        var merchantID = req.user._id.toString();
-        var userID = req.params.id;
-        //this is the index number of the item we would like to remove from the tab
-
-        var tabKey = "tab:" + merchantID + "." + userID;
-        //test output
-        redis.hgetall(tabKey, function (err, obj) {
-            if(err){
-                return next(err);
-            }else {
-                console.dir(obj);
-                res.status(200)
-                    .json({
-                        status: 'success',
-                        data: obj,
-                        message: 'Retrieved tab.'
-                    });
-            }
-        });
-
-
-    });
-
+});
 
 
 
