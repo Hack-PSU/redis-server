@@ -10,9 +10,22 @@ var redis = require('../../lib/redis');
 var request = require("request-promise-native");
 var serverOptions = require('../../lib/remoteServer');
 // using redis, create, edit and delete tabs
+/*
+{
+    status: 'success',
+        data: {
+                            "uid": element.uid,
+                            "pin": element.pin || "NULL",
+                            "name": element.firstname + ' ' + element.lastname,
+                            "shirtSize": element.shirt_size,
+                            "diet": element.dietary_restriction || "NULL",
+                            "counter": 0,
+                            "numScans": 0
 
-
-
+                        },
+    message: 'Incremented Tab.'
+}
+*/
 //todo: move queues to redis
 var unsent_scans = [];
 var unsent_assignments = [];
@@ -26,13 +39,18 @@ function clone(a) {
 const requireAuth = passport.authenticate('user-mobile', { session: false });
 //all functions with "requireAuth" used to have helpers.ensureAuthenticated
 
+
+//DOC: scan rfid and setup info
 //rename Tab localhost:3000/tabs/setup/ with rfid tag
 //btw we know pin exists
+/* RESPONSE
+{
+    status: 'success',
+    data: "OK",
+    message: 'Created tab.'
+}
+ */
 router.post('/setup', function(req, res, next) {
-        //var store = new Store({
-        //    'name': req.body.name,
-        //    'description': req.body.description,
-        //});
     var userRFID = req.body.id;
     //we know pin exists
     var pin = parseInt(req.body.pin, 14);
@@ -120,7 +138,23 @@ router.post('/setup', function(req, res, next) {
 
     });
 
-//check if pin exists
+
+//DOC: check if pin exists
+/*RESPONSE
+{
+    status: 'success',
+    data: {
+        "uid": element.uid,
+        "pin": element.pin || "NULL",
+        "name": element.firstname + ' ' + element.lastname,
+        "shirtSize": element.shirt_size,
+        "diet": element.dietary_restriction || "NULL",
+        "counter": 0,
+        "numScans": 0
+    },
+    message: 'Some Message.'
+}
+*/
 router.post('/getpin', function(req, res, next) {
 
     var pin = parseInt(req.body.pin, 14);
@@ -237,7 +271,33 @@ router.get('/updatedb', function(req, res, next) {
 
 });
 
-//increment counter to tab of rfid: https://redis.io/commands/hincrby
+//DOC: increment counter to tab of rfid: https://redis.io/commands/hincrby
+//Does food count and regular workshops
+/*RESPONSE
+{
+    status: 'success',
+    data: {
+        name: user.name,
+        diet: user.diet,
+        isRepeat: false/true
+    },
+    message: 'Incremented Tab.'
+}
+OR
+{
+    status: 'success',
+    data: {
+        "uid": element.uid,
+        "pin": element.pin || "NULL",
+        "name": element.firstname + ' ' + element.lastname,
+        "shirtSize": element.shirt_size,
+        "diet": element.dietary_restriction || "NULL",
+        "counter": 0,
+        "numScans": 0
+    },
+    message: 'Some Message.'
+}
+*/
 router.post('/add', function(req, res, next) {
     //var store = new Store({
     //    'name': req.body.name,
@@ -266,37 +326,24 @@ router.post('/add', function(req, res, next) {
     console.log("UNSENT SCANS: " + JSON.stringify(unsent_scans));
 
 
-    //todo: if redis.exists(tabkey) doesn't exist then throw danger error.
     //They haven't registered and it'll still go through but make a seperate location for this.
     //need to throw an error that doesn't exist
     //redis.hget(tabKey, "numProducts", function (err, reply) {
     //add to redis
-    if(location == process.env.FOOD){
-        redis.HINCRBY(userRFID, "counter", 1, function (err, obj) {
-            if(err){
+    redis.exists(userRFID , function (err, val) {
+        if(err){
+
+        }else{
+            if(val == 0){
                 res.status(500)
                     .json({
                         status: 'error',
-                        data: err,
-                        message: 'Something went wrong'
+                        data: val,
+                        message: 'Does not exist.'
                     });
-            }else {
-                //actually send to server now that we know it exists
-                //todo:worry about promises and mutli data usage
-                request(options).then(function (response) {
-                    //empty list of unsent scans
-                    console.dir("SUCCESS: " + response);
-                    unsent_scans = [];
-                }).catch(function (err) {
-                    // Something bad happened, handle the error
-                    console.log(err);
-                    //do not remove unsent scans
-                });
-
-                console.log("Incrementing FOOD counter");
-                if (obj) {
-                    redis.hgetall(userRFID, function (err, user) {
-                        console.dir(user);
+            }else{
+                if(location == process.env.FOOD){
+                    redis.HINCRBY(userRFID, "counter", 1, function (err, obj) {
                         if(err){
                             res.status(500)
                                 .json({
@@ -304,106 +351,134 @@ router.post('/add', function(req, res, next) {
                                     data: err,
                                     message: 'Something went wrong'
                                 });
-                        }else{
-                            var retVal = {
-                                name: user.name,
-                                diet: user.diet,
-                                isRepeat: false
-                            };
-                            if(parseInt(obj) > 1){
-                                retVal.isRepeat = true;
-                            }
-
-                            res.status(200)
-                                .json({
-                                    status: 'success',
-                                    data: retVal,
-                                    message: 'Incremented Tab.'
-                                });
-                        }
-
-                    });
-                }else{
-                    res.status(500)
-                        .json({
-                            status: 'error',
-                            data: obj,
-                            message: 'Couldn\'t find rfid'
-                        });
-                }
-            }
-        });
-    }else{
-        redis.HINCRBY(userRFID, "numScans", 1, function (err, obj) {
-            if(err){
-                res.status(500)
-                    .json({
-                        status: 'error',
-                        data: err,
-                        message: 'Something went wrong'
-                    });
-            }else {
-                //actually send to server now that we know it exists
-                //todo:worry about promises and mutli data usage
-                request(options).then(function (response) {
-                    //empty list of unsent scans
-                    console.dir("SUCCESS: " + response);
-                    unsent_scans = [];
-                }).catch(function (err) {
-                    // Something bad happened, handle the error
-                    console.log(err);
-                    //do not remove unsent scans
-                });
-
-                console.log("Incrementing numScans counter");
-                if (obj) {
-
-                    var numScans = parseInt(obj.toString()) - 1;
-                    var scanLocKey = "Scan." + numScans + ".location";
-                    var scanTimeKey = "Scan." + numScans + ".time";
-                    var data = {};
-                    var date = scan.scan_time;
-                    data[scanLocKey] = location;
-                    data[scanTimeKey] = date;
-                    redis.hmset(userRFID, data, function(err, reply) {
-                        // reply is null when the key is missing
-                        if (err) {
-                            return next(err);
-                        } else {
-                            console.log("Successfully added to tab!");
-                            redis.hgetall(userRFID, function (err, user) {
-                                console.dir(user);
-                                if(user) {
-                                    res.status(200)
-                                        .json({
-                                            status: 'success',
-                                            data: user,
-                                            message: 'Incremented Tab.'
-                                        });
-                                }else{
-                                    res.status(200)
-                                        .json({
-                                            status: 'success',
-                                            data: reply,
-                                            message: 'Incremented Tab.'
-                                        });
-                                }
+                        }else {
+                            //actually send to server now that we know it exists
+                            //todo:worry about promises and mutli data usage
+                            request(options).then(function (response) {
+                                //empty list of unsent scans
+                                console.dir("SUCCESS: " + response);
+                                unsent_scans = [];
+                            }).catch(function (err) {
+                                // Something bad happened, handle the error
+                                console.log(err);
+                                //do not remove unsent scans
                             });
 
+                            console.log("Incrementing FOOD counter");
+                            if (obj) {
+                                redis.hgetall(userRFID, function (err, user) {
+                                    console.dir(user);
+                                    if(err){
+                                        res.status(500)
+                                            .json({
+                                                status: 'error',
+                                                data: err,
+                                                message: 'Something went wrong'
+                                            });
+                                    }else{
+                                        var retVal = {
+                                            name: user.name,
+                                            diet: user.diet,
+                                            isRepeat: false
+                                        };
+                                        if(parseInt(obj) > 1){
+                                            retVal.isRepeat = true;
+                                        }
+
+                                        res.status(200)
+                                            .json({
+                                                status: 'success',
+                                                data: retVal,
+                                                message: 'Incremented Tab.'
+                                            });
+                                    }
+
+                                });
+                            }else{
+                                res.status(500)
+                                    .json({
+                                        status: 'error',
+                                        data: obj,
+                                        message: 'Couldn\'t find rfid'
+                                    });
+                            }
                         }
                     });
-
                 }else{
-                    res.status(500)
-                        .json({
-                            status: 'error',
-                            data: obj,
-                            message: 'Something went wrong'
-                        });
+                    redis.HINCRBY(userRFID, "numScans", 1, function (err, obj) {
+                        if(err){
+                            res.status(500)
+                                .json({
+                                    status: 'error',
+                                    data: err,
+                                    message: 'Something went wrong'
+                                });
+                        }else {
+                            //actually send to server now that we know it exists
+                            //todo:worry about promises and mutli data usage
+                            request(options).then(function (response) {
+                                //empty list of unsent scans
+                                console.dir("SUCCESS: " + response);
+                                unsent_scans = [];
+                            }).catch(function (err) {
+                                // Something bad happened, handle the error
+                                console.log(err);
+                                //do not remove unsent scans
+                            });
+
+                            console.log("Incrementing numScans counter");
+                            if (obj) {
+
+                                var numScans = parseInt(obj.toString()) - 1;
+                                var scanLocKey = "Scan." + numScans + ".location";
+                                var scanTimeKey = "Scan." + numScans + ".time";
+                                var data = {};
+                                var date = scan.scan_time;
+                                data[scanLocKey] = location;
+                                data[scanTimeKey] = date;
+                                redis.hmset(userRFID, data, function(err, reply) {
+                                    // reply is null when the key is missing
+                                    if (err) {
+                                        return next(err);
+                                    } else {
+                                        console.log("Successfully added to tab!");
+                                        redis.hgetall(userRFID, function (err, user) {
+                                            console.dir(user);
+                                            if(user) {
+                                                res.status(200)
+                                                    .json({
+                                                        status: 'success',
+                                                        data: user,
+                                                        message: 'Incremented Tab.'
+                                                    });
+                                            }else{
+                                                res.status(200)
+                                                    .json({
+                                                        status: 'success',
+                                                        data: reply,
+                                                        message: 'Incremented Tab.'
+                                                    });
+                                            }
+                                        });
+
+                                    }
+                                });
+
+                            }else{
+                                res.status(500)
+                                    .json({
+                                        status: 'error',
+                                        data: obj,
+                                        message: 'Something went wrong'
+                                    });
+                            }
+                        }
+                    });
                 }
             }
-        });
-    }
+        }
+    });
+
 
 
 
@@ -412,7 +487,6 @@ router.post('/add', function(req, res, next) {
 
 router.get('/name', function(req, res, next) {
 
-    var location = req.body.location.toString();
     var userRFID = req.body.id;
     //this is the index number of the item we would like to remove from the tab
     //test output
@@ -505,7 +579,7 @@ function scan(pattern, keys, callback){
     });
 }
 
-
+//DOC: Used to reset the food counter when needed for next food event
 router.get('/resetcounter', function(req, res, next) {
 
     //this is the index number of the item we would like to remove from the tab
@@ -555,7 +629,7 @@ router.get('/resetcounter', function(req, res, next) {
 
 
 //close tab
-router.post('/close', helpers.ensureOAuthenticated,
+router.post('/close',
     function(req, res, next) {
         //var store = new Store({
         //    'name': req.body.name,
