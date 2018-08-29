@@ -43,6 +43,12 @@ const requireAuth = passport.authenticate('user-mobile', { session: false });
 //DOC: scan rfid and setup info
 //rename Tab localhost:3000/tabs/setup/ with rfid tag
 //btw we know pin exists
+/* REQUEST
+{
+    id: <<RFID CODE>>,
+    pin: <<base 14 pin>>
+}
+ */
 /* RESPONSE
 {
     status: 'success',
@@ -140,6 +146,11 @@ router.post('/setup', function(req, res, next) {
 
 
 //DOC: check if pin exists
+/* REQUEST
+{
+    pin: <<base 14 pin>>
+}
+ */
 /*RESPONSE
 {
     status: 'success',
@@ -273,6 +284,12 @@ router.get('/updatedb', function(req, res, next) {
 
 //DOC: increment counter to tab of rfid: https://redis.io/commands/hincrby
 //Does food count and regular workshops
+/* REQUEST
+{
+    location: <<Identifier for which physical location the scanner is in>>,
+    id: <<RFID TAG>>
+}
+ */
 /*RESPONSE
 {
     status: 'success',
@@ -485,6 +502,19 @@ router.post('/add', function(req, res, next) {
 
 });
 
+/* REQUEST
+{
+    id: <<RFID CODE>>
+}
+ */
+/* RESPONSE
+{
+    status: 'success',
+    data: <<user name>>,
+    message: 'Retrieved tab.'
+}
+ */
+
 router.get('/name', function(req, res, next) {
 
     var userRFID = req.body.id;
@@ -516,9 +546,22 @@ router.get('/name', function(req, res, next) {
 
     });
 
+
+/* REQUEST
+{
+    id: <<RFID CODE>>
+}
+ */
+/* RESPONSE
+{
+    status: 'success',
+    data: <<user shirt size>>,
+    message: 'Retrieved tab.'
+}
+ */
+
 router.get('/shirtSize', function(req, res, next) {
 
-    var location = req.body.location.toString();
     var userRFID = req.body.id;
     //this is the index number of the item we would like to remove from the tab
     //test output
@@ -539,9 +582,21 @@ router.get('/shirtSize', function(req, res, next) {
 
 });
 
+
+/* REQUEST
+{
+    id: <<RFID CODE>>
+}
+ */
+/* RESPONSE
+{
+    status: 'success',
+    data: <<user dietary restrictions>>,
+    message: 'Retrieved tab.'
+}
+ */
 router.get('/diet', function(req, res, next) {
 
-    var location = req.body.location.toString();
     var userRFID = req.body.id;
     //this is the index number of the item we would like to remove from the tab
     //test output
