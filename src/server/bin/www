@@ -7,6 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('express4:server');
 var http = require('http');
+var https = require('https');
+var fs = require("fs");
 
 /**
  * Get port from environment and store in Express.
@@ -16,10 +18,24 @@ var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /**
+ * Create HTTPS server.
+ */
+    //TODO: Find a way to read key and cert without hard reference and without adding to git repo
+var options = {
+    key: fs.readFileSync('/Users/PranavJain/Documents/Penn-State/Extracuricullars/HackPSU/Keys/key.pem'),
+    cert: fs.readFileSync('/Users/PranavJain/Documents/Penn-State/Extracuricullars/HackPSU/Keys/cert.pem'),
+    passphrase: "hackDaddy",
+    requestCert: false,
+    rejectUnauthorized: false
+};
+
+var server = https.createServer(options, app);
+
+/**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+//var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
