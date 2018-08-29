@@ -14,6 +14,6 @@ COPY . .
 
 # Install app dependencies
 RUN npm install
-ENV RUN_ENV=docker
+ENV RUN_ENV=mongo
 EXPOSE 3000
 CMD [ "npm", "start" ]

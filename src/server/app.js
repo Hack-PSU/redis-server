@@ -10,22 +10,26 @@ var session = require('express-session');
 var flash = require('connect-flash');
 var swig = require('swig');
 var passport = require('./lib/auth');
+var mongoose = require('mongoose');
 
 //set up redis
 var redis = require('./lib/redis');
 
 
-// *** seed the database *** //
-
-
 
 // *** config file *** //
-//var config = require('../_config');
+var config = require('../_config');
+
+// *** seed the database *** //
+if (process.env.NODE_ENV === 'development') {
+    var seedAdmin = require('./models/seeds/admin.js');
+    seedAdmin();
+}
 
 
 // *** routes *** //
 var mainRoutes = require('./routes/index');
-//var authRoutes = require('./routes/auth');
+var authRoutes = require('./routes/auth');
 var tabRoutes = require('./routes/api/tab');
 
 
@@ -68,11 +72,12 @@ app.use(express.static(path.join(__dirname, '../', 'client')));
 
 
 // *** mongo *** //
-
+app.set('dbUrl', config.mongoURI[process.env.NODE_ENV]);
+mongoose.connect(app.get('dbUrl'));
 
 // *** main routes *** //
 app.use('/', mainRoutes);
-//app.use('/auth', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/tabs/', tabRoutes);
 
 

@@ -4,20 +4,6 @@ function ensureAuthenticated(req, res, next) {
     }
     res.redirect('/auth/login');
 }
-//this below may not work...
-function ensureOAuthenticated(req, res, next) {
-    const requireAuth = passport.authenticate('user-mobile', { session: false });
-
-    return requireAuth;
-}
-function ensureMerchantAuthenticated(req, res, next) {
-    console.log("Testing Merchant Auth for: " + req.user.email);
-    if (req.isAuthenticated() && req.user.description) {
-        console.log("Successful test of Merchant Auth");
-        return next();
-    }
-    res.redirect('/merchant/auth/login');
-}
 
 function ensureAdmin(req, res, next) {
     if (req.isAuthenticated() && req.user.admin) {
@@ -50,18 +36,16 @@ function loginRedirect(req, res, next) {
 }
 
 function setUserInfo(request) {
-    const getUserInfo = {
+    var getUserInfo = {
         _id: request._id,
         email: request.email
     };
 
     return getUserInfo;
-};
+}
 
 
 module.exports = {
-    ensureOAuthenticated: ensureOAuthenticated,
-    ensureMerchantAuthenticated: ensureMerchantAuthenticated,
     setUserInfo: setUserInfo,
     ensureAuthenticated: ensureAuthenticated,
     ensureAdmin: ensureAdmin,

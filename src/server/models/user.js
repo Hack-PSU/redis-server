@@ -1,4 +1,4 @@
-/*var mongoose = require('mongoose');
+var mongoose = require('mongoose');
 var bcrypt = require('bcryptjs');
 
 var Schema = mongoose.Schema;
@@ -16,14 +16,6 @@ var User = new Schema({
         unique: true,
         lowercase: true
     },
-    products: [
-        {
-            productID: String,
-            name: String,
-            token: String,
-            time: { type: Date, default: Date.now }
-        }
-    ],
     password: {
         type: String,
         required: true
@@ -35,11 +27,6 @@ var User = new Schema({
     userType: {
         type: String,
         default: 'User'
-    },
-    stripe: {
-        type: String,
-        unique: true,
-        default: "NAN"
     }
 });
 
@@ -68,4 +55,3 @@ User.methods.comparePassword = function(password, done) {
 
 
 module.exports = mongoose.model('users', User);
-*/

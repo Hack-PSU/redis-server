@@ -1,9 +1,7 @@
-/*var express = require('express');
-var stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+var express = require('express');
 var router = express.Router();
 var moment = require('moment');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+var jwt = require('jsonwebtoken');
 
 var passport = require('../lib/auth');
 var helpers = require('../lib/helpers');
@@ -29,49 +27,37 @@ router.get('/register', function(req, res, next){
 
 
 router.post('/register', function(req, res, next) {
-  var newUser = new User(req.body);
-  newUser.generateHash(req.body.password, function(err, hash) {
-    if (err) {
-      return next(err);
-    } else {
-      newUser.password = hash;
-      console.log(newUser);
-      console.log("IN HERE--------------");
-      stripe.customers.create({
-        email: req.body.email,
-        description: 'Customer for joshua.jones@example.com' // obtained with Stripe.js
-      }, function(err, customer) {
-          console.log("MADE IT HERE--------------");
-          console.log(err);
-          console.log(customer);
-          console.log(customer.id);
-          newUser.stripe = customer.id;
-          console.log(newUser);
-          //save the user
-          newUser.save(function(err, results) {
-            if (err) {
-              console.log(err);
-              req.flash('message', {
-                status: 'danger',
-                value: 'Sorry. That email already exists. Try again.'
-              });
-              return res.redirect('/auth/register');
-            } else {
-              req.logIn(newUser, function(err) {
+    var newUser = new User(req.body);
+    newUser.generateHash(req.body.password, function(err, hash) {
+        if (err) {
+            return next(err);
+        } else {
+            newUser.password = hash;
+            console.log(newUser);
+            //save the user
+            newUser.save(function(err, results) {
                 if (err) {
-                  return next(err);
+                    console.log(err);
+                    req.flash('message', {
+                        status: 'danger',
+                        value: 'Sorry. That email already exists. Try again.'
+                    });
+                    return res.redirect('/auth/register');
+                } else {
+                    req.logIn(newUser, function(err) {
+                        if (err) {
+                            return next(err);
+                        }
+                        req.flash('message', {
+                            status: 'success',
+                            value: 'Successfully registered (and logged in).'
+                        });
+                        return res.redirect('/');
+                    });
                 }
-                req.flash('message', {
-                  status: 'success',
-                  value: 'Successfully registered (and logged in).'
-                });
-                return res.redirect('/');
-              });
-            }
-          });
-      });
-    }
-  });
+            });
+        }
+    });
 });
 
 router.get('/login', helpers.loginRedirect, function(req, res, next){
@@ -152,14 +138,6 @@ router.get('/admin', helpers.ensureAdmin, function(req, res){
       return next(err);
     } else {
       var allProducts = [];
-      for (var i = 0; i < data.length; i++) {
-        if (data[i].products.length > 0) {
-          for (var j = 0; j < data[i].products.length; j++) {
-            allProducts.push(data[i].products[j]);
-          }
-        }
-      }
-      allProducts.reverse();
       return res.render('admin', {data: allProducts, moment: moment, user: req.user});
     }
   });
@@ -167,4 +145,3 @@ router.get('/admin', helpers.ensureAdmin, function(req, res){
 
 
 module.exports = router;
-*/
