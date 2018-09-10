@@ -22,8 +22,8 @@ app.set('port', port);
  */
     //TODO: Find a way to read key and cert without hard reference and without adding to git repo
 var options = {
-    key: fs.readFileSync('/Users/PranavJain/Documents/Penn-State/Extracuricullars/HackPSU/Keys/key.pem'),
-    cert: fs.readFileSync('/Users/PranavJain/Documents/Penn-State/Extracuricullars/HackPSU/Keys/cert.pem'),
+    key: fs.readFileSync('./src/server/bin/keys/key.pem'),
+    cert: fs.readFileSync('./src/server/bin/keys/cert.pem'),
     passphrase: "hackDaddy",
     requestCert: false,
     rejectUnauthorized: false

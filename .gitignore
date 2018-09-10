@@ -1,3 +1,6 @@
 .DS_Store
 .idea/
 .env
+*.pem
+node_modules/
+package-lock.json

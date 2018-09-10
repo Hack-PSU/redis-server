@@ -11,7 +11,7 @@ WORKDIR /usr/src/app
 #RUN git clone git://github.com/ThePBJain/BarTab-Server.git .
 #COPY .env .
 COPY . .
-
+COPY ./src/server/bin/keys/ src/server/bin/keys/
 # Install app dependencies
 RUN npm install
 ENV RUN_ENV=mongo
