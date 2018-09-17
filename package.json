@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node ./src/server/bin/www",
     "cov": "./node_modules/.bin/istanbul cover _mocha -- -R spec",
-    "send-coverage": "./node_modules/.bin/istanbul cover --report lcovonly ./node_modules/.bin/_mocha && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+    "send-coverage": "./node_modules/.bin/istanbul cover --report lcovonly ./node_modules/.bin/_mocha && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "apidoc": "apidoc -i ./src -o doc/"
   },
   "repository": {
     "type": "git",
@@ -46,5 +47,8 @@
     "request-promise-native": "^1.0.5",
     "serve-favicon": "^2.3.0",
     "swig": "^1.4.2"
+  },
+  "devDependencies": {
+    "apidoc": "^0.17.6"
   }
 }
