@@ -596,24 +596,37 @@ router.get('/user-info', function (req, res, next) {
  * @apiUse AuthArgumentRequired
  *
  * @apiSuccess {Array} Array of currently active locations
- */
-/*
-RESPONSE:{
-  locations: [
-      {"location_name": "Business Building Room 124",
-      "uid": 1
+ * @apiSuccessExample {json} Success-Response:
+ *  HTTP/1.1 200 OK
+ *  {
+ *    locations: [
+      {
+        "location_name": "Cybertorium",
+        "uid": 2
       },
-      ...
-  ]
-}
+      {
+        "location_name": "Atrium",
+        "uid": 5
+      },
+      {
+        "location_name": "Business Building Room 120",
+        "uid": 6
+      },
+      {
+        "location_name": "Atrium Staircase",
+        "uid": 11
+      },
+      {
+        "location_name": "Game room",
+        "uid": 15
+      }
+    ]
+   }
+ *
  */
 router.get('/active-locations', function (req, res, next) {
 
-  //we know pin exists
-  var pin = parseInt(req.body.pin, 10);
   let timestamp = Date.now();
-  console.log("OPENING TAB WITH USER: " + userRFID);
-  console.log("WE HAVE PIN: " + pin);
 
   var options = clone(serverOptions);
   var uri = options.uri;
