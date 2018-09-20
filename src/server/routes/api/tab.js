@@ -585,6 +585,61 @@ router.get('/user-info', function (req, res, next) {
 
 });
 
+/**
+ * @api {get} /tabs/active-locations Get all active locations
+ * @apiVersion 1.0.0
+ * @apiName Get all active locations
+ * @apiGroup RFID
+ * @apiPermission TeamMemberPermission
+ *
+ *
+ * @apiUse AuthArgumentRequired
+ *
+ * @apiSuccess {Array} Array of currently active locations
+ */
+/*
+RESPONSE:{
+  locations: [
+      {"location_name": "Business Building Room 124",
+      "uid": 1
+      },
+      ...
+  ]
+}
+ */
+router.get('/active-locations', function (req, res, next) {
+
+  //we know pin exists
+  var pin = parseInt(req.body.pin, 10);
+  let timestamp = Date.now();
+  console.log("OPENING TAB WITH USER: " + userRFID);
+  console.log("WE HAVE PIN: " + pin);
+
+  var options = clone(serverOptions);
+  var uri = options.uri;
+  options.uri = uri + '/v1/scanner/location';
+  request(options).then(function (response) {
+    //empty list of unsent scans
+    console.dir("SUCCESS: " + response);
+    res.status(200).json({
+      status: 'success',
+      locations: response,
+      message: 'Found active locations.'
+    });
+  }).catch(function (err) {
+    // Something bad happened, handle the error
+    console.log(err);
+    res.status(500).json({
+      status: 'error',
+      data: err,
+      message: 'Server error.'
+    });
+    //do not remove unsent scans
+  });
+
+
+});
+
 
 var cursor = '0';
 
