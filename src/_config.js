@@ -1,7 +1,7 @@
-var config = {};
+let config = {};
 
 //figure our mongoURI
-var uriRoot = process.env.RUN_ENV || 'localhost';
+let uriRoot = process.env.RUN_ENV || 'localhost';
 // mongo uri
 config.mongoURI = {
     development: "mongodb://" + uriRoot + "/node-stripe-charge",

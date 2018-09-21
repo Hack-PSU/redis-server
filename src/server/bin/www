@@ -4,8 +4,8 @@
  * Module dependencies.
  */
 
-var app = require('../app');
-var debug = require('debug')('express4:server');
+let app = require('../app');
+let debug = require('debug')('express4:server');
 var http = require('http');
 var https = require('https');
 var fs = require("fs");
@@ -20,7 +20,6 @@ app.set('port', port);
 /**
  * Create HTTPS server.
  */
-    //TODO: Find a way to read key and cert without hard reference and without adding to git repo
 var options = {
     key: fs.readFileSync('./src/server/bin/keys/key.pem'),
     cert: fs.readFileSync('./src/server/bin/keys/cert.pem'),

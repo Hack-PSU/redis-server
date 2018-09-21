@@ -1,11 +1,13 @@
-var express = require('express');
-var router = express.Router();
-var moment = require('moment');
-var jwt = require('jsonwebtoken');
+let express = require('express');
+let router = express.Router();
+let moment = require('moment');
+let jwt = require('jsonwebtoken');
 
-var passport = require('../lib/auth');
-var helpers = require('../lib/helpers');
-var User = require('../models/user');
+const uuidv4 = require('uuid/v4');
+let passport = require('../lib/auth');
+let helpers = require('../lib/helpers');
+let User = require('../models/user');
+let Scanner = require('../models/scanner');
 
 // Middleware to require login/auth
 const requireAuth = passport.authenticate('user-mobile', { session: false });
@@ -19,15 +21,18 @@ function generateToken(user) {
 }
 
 router.get('/register', function(req, res, next){
-  res.render('register', {
+  //currently disabling registration
+  //TODO: design so we can reenable registration
+  return res.redirect('/auth/login');
+  /*res.render('register', {
     user: req.user,
     message: req.flash('message')[0]
-  });
+  });*/
 });
 
-
+//Register Users on website
 router.post('/register', function(req, res, next) {
-    var newUser = new User(req.body);
+    let newUser = new User(req.body);
     newUser.generateHash(req.body.password, function(err, hash) {
         if (err) {
             return next(err);
@@ -58,6 +63,36 @@ router.post('/register', function(req, res, next) {
             });
         }
     });
+});
+
+router.post('/register-scanner', function(req, res, next) {
+  if(!req.body.pin){
+    console.error("Invalid pin passed");
+    return res.status(400).send(new Error("Invalid pin passed"));
+  }
+  let pin = req.body.pin;
+  let name = req.body.name;
+  let newScanner = new Scanner();
+  newScanner.apikey = uuidv4();
+  newScanner.name = name || "New-Scanner";
+  //TODO: check if api key already exists
+  console.log("THE PIN IS: " + pin);
+  newScanner.save(function(err, results) {
+    if (err) {
+      console.log(err);
+      res.status(500).json({
+        status: "error",
+        data: err,
+        message: "There was an error."
+      });
+    } else {
+        res.status(200).json({
+          status: "success",
+          data: results,
+          message: "Scanner Added. API Key Generated."
+        });
+    }
+  });
 });
 
 router.get('/login', helpers.loginRedirect, function(req, res, next){
@@ -104,9 +139,9 @@ router.post('/authenticate', function(req, res, next) {
             });
         }else{
             console.log("User found...");
-            var userInfo = helpers.setUserInfo(user);
+            let userInfo = helpers.setUserInfo(user);
 
-            var token = generateToken(userInfo);
+            let token = generateToken(userInfo);
             res.status(200).json({
                 success: true,
                 token: 'JWT ' + token,
@@ -137,7 +172,7 @@ router.get('/admin', helpers.ensureAdmin, function(req, res){
     if (err) {
       return next(err);
     } else {
-      var allProducts = [];
+      let allProducts = [];
       return res.render('admin', {data: allProducts, moment: moment, user: req.user});
     }
   });

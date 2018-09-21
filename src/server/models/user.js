@@ -1,8 +1,8 @@
-var mongoose = require('mongoose');
-var bcrypt = require('bcryptjs');
+let mongoose = require('mongoose');
+let bcrypt = require('bcryptjs');
 
-var Schema = mongoose.Schema;
-var SALT_WORK_FACTOR;
+let Schema = mongoose.Schema;
+let SALT_WORK_FACTOR;
 
 if (process.env.NODE_ENV === 'test') {
     SALT_WORK_FACTOR = 1;
@@ -10,7 +10,7 @@ if (process.env.NODE_ENV === 'test') {
     SALT_WORK_FACTOR = 10;
 }
 
-var User = new Schema({
+let User = new Schema({
     email: {
         type: String,
         unique: true,

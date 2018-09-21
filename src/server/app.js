@@ -1,40 +1,40 @@
 // *** main dependencies *** //
 require('dotenv').load();
 
-var express = require('express');
-var path = require('path');
-var morgan = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var session = require('express-session');
-var flash = require('connect-flash');
-var swig = require('swig');
-var passport = require('./lib/auth');
-var mongoose = require('mongoose');
+let express = require('express');
+let path = require('path');
+let morgan = require('morgan');
+let cookieParser = require('cookie-parser');
+let bodyParser = require('body-parser');
+let session = require('express-session');
+let flash = require('connect-flash');
+let swig = require('swig');
+let passport = require('./lib/auth');
+let mongoose = require('mongoose');
 
 //set up redis
-var redis = require('./lib/redis');
+let redis = require('./lib/redis');
 
 
 
 // *** config file *** //
-var config = require('../_config');
+let config = require('../_config');
 
 // *** seed the database *** //
 if (process.env.NODE_ENV === 'development') {
-    var seedAdmin = require('./models/seeds/admin.js');
+    let seedAdmin = require('./models/seeds/admin.js');
     seedAdmin();
 }
 
 
 // *** routes *** //
-var mainRoutes = require('./routes/index');
-var authRoutes = require('./routes/auth');
-var tabRoutes = require('./routes/api/tab');
+let mainRoutes = require('./routes/index');
+let authRoutes = require('./routes/auth');
+let tabRoutes = require('./routes/api/tab');
 
 
 // *** express instance *** //
-var app = express();
+let app = express();
 
 
 // *** view engine *** ///
@@ -49,7 +49,7 @@ app.set('views', path.join(__dirname, './views'));
 
 // *** config middleware *** //
 if (process.env.NODE_ENV !== 'test') {
-  var logger = morgan('combined');
+  let logger = morgan('combined');
   app.use(logger);
 }
 app.use(bodyParser.json());
@@ -85,7 +85,7 @@ app.use('/tabs/', tabRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
+  let err = new Error('Not Found');
   err.status = 404;
   next(err);
 });

@@ -1,12 +1,12 @@
-var passport = require('passport');
-var User = require('../user');
+let passport = require('passport');
+let User = require('../user');
 
 
-var seedAdmin = function() {
+let seedAdmin = function() {
   User.find({}, function(err, documents) {
     if (documents.length === 0){
-      var password = 'admin';
-      var user = new User({
+      let password = process.env.ADMIN_PASS;
+      let user = new User({
         email: 'ad@min.com',
         admin: true,
         password: password
