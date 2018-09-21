@@ -1,14 +1,14 @@
 /**
  * Created by PranavJain on 2/20/17.
  */
-var express = require('express');
-var router = express.Router();
+let express = require('express');
+let router = express.Router();
 
-var passport = require('../../lib/auth');
-var helpers = require('../../lib/helpers');
-var redis = require('../../lib/redis');
-var request = require("request-promise-native");
-var serverOptions = require('../../lib/remoteServer');
+let passport = require('../../lib/auth');
+let helpers = require('../../lib/helpers');
+let redis = require('../../lib/redis');
+let request = require("request-promise-native");
+let serverOptions = require('../../lib/remoteServer');
 // using redis, create, edit and delete tabs
 /*
 {
@@ -27,8 +27,8 @@ var serverOptions = require('../../lib/remoteServer');
 }
 */
 //todo: move queues to redis
-var unsent_scans = [];
-var unsent_assignments = [];
+let unsent_scans = [];
+let unsent_assignments = [];
 
 function clone(a) {
   return JSON.parse(JSON.stringify(a));
@@ -71,14 +71,14 @@ const requireAuth = passport.authenticate('user-mobile', {session: false});
  *
  * @apiSuccess {Array} Array of registered hackers
  */
-router.post('/setup', function (req, res, next) {
+router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body.id || !req.body.pin){
     console.error("Invalid values passed for rfid or pin");
     return res.status(400).send(new Error("Invalid values passed for rfid or pin"));
   }
-  var userRFID = req.body.id;
+  let userRFID = req.body.id;
   //we know pin exists
-  var pin = parseInt(req.body.pin, 10);
+  let pin = parseInt(req.body.pin, 10);
 
   console.log("OPENING TAB WITH USER: " + userRFID);
   console.log("WE HAVE PIN: " + pin);
@@ -129,10 +129,10 @@ router.post('/setup', function (req, res, next) {
                 console.dir(obj);
 
                 //prep request to send asynch
-                var options = clone(serverOptions);
+                let options = clone(serverOptions);
                 options.method = 'POST';
                 options.uri = options.uri + '/v1/pi/assignment';
-                var scan = {
+                let scan = {
                   "rfid_uid": userRFID,
                   "user_uid": obj.uid,
                   "time": Date.now()
@@ -185,12 +185,12 @@ router.post('/setup', function (req, res, next) {
     message: 'Some Message.'
 }
 */
-router.post('/getpin', function (req, res, next) {
+router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body.pin){
     console.error("Invalid values passed for pin");
     return res.status(400).send(new Error("Invalid values passed for pin"));
   }
-  var pin = parseInt(req.body.pin, 10);
+  let pin = parseInt(req.body.pin, 10);
   console.log("PIN IS: " + pin);
   redis.hgetall(pin, function (err, obj) {
     if (err) {
@@ -223,20 +223,20 @@ router.post('/getpin', function (req, res, next) {
 
 
 router.get('/updatedb', function (req, res, next) {
-  //var store = new Store({
+  //let store = new Store({
   //    'name': req.body.name,
   //    'description': req.body.description,
   //});
-  var options = clone(serverOptions);
-  var uri = options.uri;
+  let options = clone(serverOptions);
+  let uri = options.uri;
   options.uri = uri + '/v1/scanner/registrations';
   request(options)
     .then(function (response) {
       // Request was successful, use the response object at will
       //do redis stuff then
       //todo: this is being treated synchronously when it's not synchronous fix with promises
-      var numErrors = 0;
-      var promises = [];
+      let numErrors = 0;
+      let promises = [];
       //code to build promises to run
       response.map(function (element) {
         promises.push(new Promise(function (resolve, reject) {
@@ -337,8 +337,8 @@ OR
     message: 'Some Message.'
 }
 */
-router.post('/add', function (req, res, next) {
-  //var store = new Store({
+router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next) {
+  //let store = new Store({
   //    'name': req.body.name,
   //    'description': req.body.description,
   //});
@@ -347,20 +347,20 @@ router.post('/add', function (req, res, next) {
     return res.status(400).send(new Error("Invalid values passed for location or id"));
   }
 
-  var location = req.body.location;
-  var userRFID = req.body.id;
+  let location = req.body.location;
+  let userRFID = req.body.id;
 
   //console.log("Scanned RFID: " + userRFID + "\n with pi ID: " + location);
 
   //setup sending to server asynchronously
-  var scan = {
+  let scan = {
     "rfid_uid": userRFID,
     "scan_location": location,
     "scan_time": Date.now()
   };
   unsent_scans.push(scan);
-  var options = clone(serverOptions);
-  var uri = options.uri;
+  let options = clone(serverOptions);
+  let uri = options.uri;
   options.uri = uri + '/v1/scanner/scans';
   options.method = 'POST';
   options.body = {
@@ -420,7 +420,7 @@ router.post('/add', function (req, res, next) {
                         message: 'Something went wrong'
                       });
                   } else {
-                    var retVal = {
+                    let retVal = {
                       name: user.name,
                       diet: user.diet,
                       isRepeat: false
@@ -473,11 +473,11 @@ router.post('/add', function (req, res, next) {
               console.log("Incrementing numScans counter");
               if (obj) {
 
-                var numScans = parseInt(obj.toString()) - 1;
-                var scanLocKey = "Scan." + numScans + ".location";
-                var scanTimeKey = "Scan." + numScans + ".time";
-                var data = {};
-                var date = scan.scan_time;
+                let numScans = parseInt(obj.toString()) - 1;
+                let scanLocKey = "Scan." + numScans + ".location";
+                let scanTimeKey = "Scan." + numScans + ".time";
+                let data = {};
+                let date = scan.scan_time;
                 data[scanLocKey] = location;
                 data[scanTimeKey] = date;
                 redis.hmset(userRFID, data, function (err, reply) {
@@ -548,12 +548,12 @@ router.post('/add', function (req, res, next) {
 }
  */
 
-router.get('/user-info', function (req, res, next) {
+router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.query.id){
     console.error("Invalid values passed for rfid");
     return res.status(400).send(new Error("Invalid values passed for rfid"));
   }
-  var userRFID = req.query.id;
+  let userRFID = req.query.id;
   redis.hgetall(userRFID, function (err, obj) {
     if (err) {
       res.status(500)
@@ -624,12 +624,12 @@ router.get('/user-info', function (req, res, next) {
    }
  *
  */
-router.get('/active-locations', function (req, res, next) {
+router.get('/active-locations', helpers.ensureScannerAuthenticated, function (req, res, next) {
 
   let timestamp = Date.now();
 
-  var options = clone(serverOptions);
-  var uri = options.uri;
+  let options = clone(serverOptions);
+  let uri = options.uri;
   options.uri = uri + '/v1/scanner/location';
   request(options).then(function (response) {
     //empty list of unsent scans
@@ -654,7 +654,7 @@ router.get('/active-locations', function (req, res, next) {
 });
 
 
-var cursor = '0';
+let cursor = '0';
 
 function scan(pattern, keys, callback) {
 
@@ -678,15 +678,15 @@ router.get('/resetcounter', function (req, res, next) {
 
   //this is the index number of the item we would like to remove from the tab
   //test output
-  var data = [];
+  let data = [];
   scan('*', data, function (keys) {
     //great
     //redis.batch().exec();
     //build 2d array of commands
     //['hset', 'key(rfid)', 'counter', '0']
-    var commands = [];
-    for (var i = 0; i < keys.length; i++) {
-      var command = ["hset", "", "counter", "0"];
+    let commands = [];
+    for (let i = 0; i < keys.length; i++) {
+      let command = ["hset", "", "counter", "0"];
       command[1] = keys[i];
       commands.push(command);
     }
@@ -723,16 +723,16 @@ router.get('/resetcounter', function (req, res, next) {
 //close tab
 router.post('/close',
   function (req, res, next) {
-    //var store = new Store({
+    //let store = new Store({
     //    'name': req.body.name,
     //    'description': req.body.description,
     //});
-    var userID = req.user._id.toString();
-    var merchantID = req.body.id;
+    let userID = req.user._id.toString();
+    let merchantID = req.body.id;
     console.log("CLOSING TAB WITH USER: " + userID + "\n and MERCHANT: " + merchantID);
 
 
-    var tabKey = "tab:" + merchantID + "." + userID;
+    let tabKey = "tab:" + merchantID + "." + userID;
 
     redis.hgetall(tabKey, function (err, tab) {
       if (err || !tab) {
