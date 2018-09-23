@@ -74,7 +74,7 @@ const requireAuth = passport.authenticate('user-mobile', {session: false});
 router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body.id || !req.body.pin){
     console.error("Invalid values passed for rfid or pin");
-    return res.status(400).send(new Error("Invalid values passed for rfid or pin"));
+    return res.status(401).send(new Error("Invalid values passed for rfid or pin"));
   }
   let userRFID = req.body.id;
   //we know pin exists
@@ -94,13 +94,12 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
         });
     } else {
       console.log("TAB ALREADY OPEN");
-      console.dir(obj);
       if (obj) {
-        res.status(500)
+        res.status(409)
           .json({
             status: 'error',
             data: obj,
-            message: 'Already Opened.'
+            message: 'RFID Tag already opened.'
           });
       } else {
         redis.rename(pin, userRFID, function (err, reply) {
@@ -188,7 +187,7 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
 router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body.pin){
     console.error("Invalid values passed for pin");
-    return res.status(400).send(new Error("Invalid values passed for pin"));
+    return res.status(401).send(new Error("Invalid values passed for pin"));
   }
   let pin = parseInt(req.body.pin, 10);
   console.log("PIN IS: " + pin);
@@ -222,7 +221,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
 });
 
 
-router.get('/updatedb', function (req, res, next) {
+router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
   //let store = new Store({
   //    'name': req.body.name,
   //    'description': req.body.description,
@@ -344,7 +343,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
   //});
   if(!req.body.location || !req.body.id){
     console.error("Invalid values passed for location or id");
-    return res.status(400).send(new Error("Invalid values passed for location or id"));
+    return res.status(401).send(new Error("Invalid values passed for location or id"));
   }
 
   let location = req.body.location;
@@ -379,7 +378,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
 
     } else {
       if (val == 0) {
-        res.status(500)
+        res.status(401)
           .json({
             status: 'error',
             data: val,
@@ -551,7 +550,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
 router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.query.id){
     console.error("Invalid values passed for rfid");
-    return res.status(400).send(new Error("Invalid values passed for rfid"));
+    return res.status(401).send(new Error("Invalid values passed for rfid"));
   }
   let userRFID = req.query.id;
   redis.hgetall(userRFID, function (err, obj) {
@@ -624,7 +623,7 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
    }
  *
  */
-router.get('/active-locations', helpers.ensureScannerAuthenticated, function (req, res, next) {
+router.get('/active-locations', function (req, res, next) {
 
   let timestamp = Date.now();
 
@@ -637,6 +636,7 @@ router.get('/active-locations', helpers.ensureScannerAuthenticated, function (re
     res.status(200).json({
       status: 'success',
       locations: response,
+      length: response.length,
       message: 'Found active locations.'
     });
   }).catch(function (err) {
@@ -674,7 +674,7 @@ function scan(pattern, keys, callback) {
 }
 
 //DOC: Used to reset the food counter when needed for next food event
-router.get('/resetcounter', function (req, res, next) {
+router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
 
   //this is the index number of the item we would like to remove from the tab
   //test output
