@@ -65,35 +65,6 @@ router.post('/register', function(req, res, next) {
     });
 });
 
-router.post('/register-scanner', function(req, res, next) {
-  if(!req.body.pin){
-    console.error("Invalid pin passed");
-    return res.status(400).send(new Error("Invalid pin passed"));
-  }
-  let pin = req.body.pin;
-  let name = req.body.name;
-  let newScanner = new Scanner();
-  newScanner.apikey = uuidv4();
-  newScanner.name = name || "New-Scanner";
-  //TODO: check if api key already exists
-  console.log("THE PIN IS: " + pin);
-  newScanner.save(function(err, results) {
-    if (err) {
-      console.log(err);
-      res.status(500).json({
-        status: "error",
-        data: err,
-        message: "There was an error."
-      });
-    } else {
-        res.status(200).json({
-          status: "success",
-          data: results,
-          message: "Scanner Added. API Key Generated."
-        });
-    }
-  });
-});
 
 router.get('/login', helpers.loginRedirect, function(req, res, next){
   res.render('login', {
@@ -174,6 +145,49 @@ router.get('/admin', helpers.ensureAdmin, function(req, res){
     } else {
       let allProducts = [];
       return res.render('admin', {data: allProducts, moment: moment, user: req.user});
+    }
+  });
+});
+
+router.get('/scanners', helpers.ensureAdmin, function(req, res){
+  return Scanner.find({}, function(err, scanners) {
+    if (err) {
+      return next(err);
+    } else {
+      //console.log(scanners);
+      let allScanners = scanners;
+      return res.render('scanners', {data: allScanners, moment: moment, user: req.user});
+    }
+  });
+});
+
+router.post('/register-scanner', function(req, res, next) {
+  console.log("We found shit: " + req.body.pin);
+  if(!req.body.pin || req.body.pin != process.env.SCANNER_ADMIN_PIN){
+    console.error("Invalid pin passed");
+    return res.status(401).send(new Error("Invalid pin passed"));
+  }
+  let pin = req.body.pin;
+  let name = req.body.name;
+  let newScanner = new Scanner();
+  newScanner.apikey = uuidv4();
+  newScanner.name = name || "New-Scanner";
+  //TODO: check if api key already exists
+  console.log("THE PIN IS: " + pin);
+  newScanner.save(function(err, results) {
+    if (err) {
+      console.log(err);
+      res.status(500).json({
+        status: "error",
+        data: err,
+        message: "There was an error."
+      });
+    } else {
+      res.status(200).json({
+        status: "success",
+        data: results,
+        message: "Scanner Added. API Key Generated."
+      });
     }
   });
 });
