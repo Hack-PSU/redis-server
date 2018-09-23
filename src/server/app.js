@@ -31,7 +31,7 @@ if (process.env.NODE_ENV === 'development') {
 let mainRoutes = require('./routes/index');
 let authRoutes = require('./routes/auth');
 let tabRoutes = require('./routes/api/tab');
-
+var scannerAPIRoutes = require('./routes/api/scanner');
 
 // *** express instance *** //
 let app = express();
@@ -73,13 +73,17 @@ app.use(express.static(path.join(__dirname, '../', 'client')));
 
 // *** mongo *** //
 app.set('dbUrl', config.mongoURI[process.env.NODE_ENV]);
-mongoose.connect(app.get('dbUrl'));
+//needed to remove warnings
+mongoose.set('useFindAndModify', false);
+//usenewparser and usecreateindex is temporary for mongoose to update their shit
+mongoose.set('useCreateIndex', true);
+mongoose.connect(app.get('dbUrl'), { useNewUrlParser: true});
 
 // *** main routes *** //
 app.use('/', mainRoutes);
 app.use('/auth', authRoutes);
 app.use('/tabs/', tabRoutes);
-
+app.use('/api/v1/', scannerAPIRoutes);
 
 // *** error handlers *** //
 
