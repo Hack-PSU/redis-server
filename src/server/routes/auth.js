@@ -161,19 +161,15 @@ router.get('/scanners', helpers.ensureAdmin, function(req, res){
   });
 });
 
-router.post('/register-scanner', function(req, res, next) {
-  console.log("We found shit: " + req.body.pin);
-  if(!req.body.pin || req.body.pin != process.env.SCANNER_ADMIN_PIN){
+router.post('/scanner/register', function(req, res, next) {
+  if(!req.body.pin || req.body.pin !== process.env.SCANNER_ADMIN_PIN){
     console.error("Invalid pin passed");
     return res.status(401).send(new Error("Invalid pin passed"));
   }
   let pin = req.body.pin;
-  let name = req.body.name;
   let newScanner = new Scanner();
   newScanner.apikey = uuidv4();
-  newScanner.name = name || "New-Scanner";
-  //TODO: check if api key already exists
-  console.log("THE PIN IS: " + pin);
+  newScanner.name = (new Date()).toISOString();
   newScanner.save(function(err, results) {
     if (err) {
       console.log(err);

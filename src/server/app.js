@@ -31,7 +31,7 @@ if (process.env.NODE_ENV === 'development') {
 let mainRoutes = require('./routes/index');
 let authRoutes = require('./routes/auth');
 let tabRoutes = require('./routes/api/tab');
-var scannerAPIRoutes = require('./routes/api/scanner');
+let scannerAPIRoutes = require('./routes/api/scanner');
 
 // *** express instance *** //
 let app = express();

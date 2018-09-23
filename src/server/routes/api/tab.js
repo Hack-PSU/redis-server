@@ -312,7 +312,8 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
 }
  */
 /*RESPONSE
-{
+//TODO: Combine response together
+FOOD{
     status: 'success',
     data: {
         name: user.name,
@@ -322,7 +323,7 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
     message: 'Incremented Tab.'
 }
 OR
-{
+REGULAR ENTRY{
     status: 'success',
     data: {
         "uid": element.uid,
