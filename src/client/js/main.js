@@ -4,13 +4,13 @@ $(document).ready(function() {
 
 
 
-    $('#add-product-form').submit(function(event) {
+    $('#add-scanner-form').submit(function(event) {
         event.preventDefault();
         $('#product-response').text('');
         var payload = {name: $('#product-name').val(), amount:$('#product-price').val()};
         $.ajax({
             type: 'POST',
-            url: '/api/v1/product',
+            url: '/api/v1/scanners',
             data: payload
         })
             .done(function(data) {
@@ -23,13 +23,13 @@ $(document).ready(function() {
         $('#product-price').val('');
     });
 
-    $('[id^=delete-product-form]').submit(function(event) {
+    $('[id^=delete-scanner-form]').submit(function(event) {
         event.preventDefault();
         $('#product-response').text('');
         var payload = {};
         var index = this.id;
         index = index.substring(19);
-        var url = '/api/v1/product/' + index;
+        var url = '/api/v1/scanners/' + index;
         $.ajax({
             type: 'DELETE',
             url: url,
