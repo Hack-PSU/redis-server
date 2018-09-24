@@ -1,11 +1,12 @@
-var passport = require('passport');
-var LocalStrategy = require('passport-local');
-//var OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
+let passport = require('passport');
+let LocalStrategy = require('passport-local');
+//let OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
 //const BasicStrategy = require('passport-http').BasicStrategy;
-var JwtStrategy = require('passport-jwt').Strategy;
-var ExtractJwt = require('passport-jwt').ExtractJwt;
-
-var User = require('../models/user');
+let JwtStrategy = require('passport-jwt').Strategy;
+let ExtractJwt = require('passport-jwt').ExtractJwt;
+let APIKeyStrategy = require('passport-localapikey').Strategy;
+let User = require('../models/user');
+let Scanner = require('../models/scanner');
 
 // http://stackoverflow.com/a/21898892
 //todo: get this to work with OAuth 2 check passportjs docs
@@ -58,7 +59,15 @@ passport.use('user-mobile', new JwtStrategy({
         return done(err);
     }
 ));
-
+passport.use('scanner-api', new APIKeyStrategy(
+  function(apikey, done) {
+    Scanner.findOne({ apikey: apikey }, function (err, scanner) {
+      if (err) { return done(err); }
+      if (!scanner) { return done(null, false); }
+      return done(null, scanner);
+    });
+  }
+));
 
 
 //fix these to work with both models
