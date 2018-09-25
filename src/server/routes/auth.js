@@ -93,6 +93,7 @@ router.post('/login', function(req, res, next) {
         status: 'success',
         value: 'Welcome!'
       });
+      //TODO: next()?? to go back to original page?
       return res.redirect('/');
     });
   })(req, res, next);
