@@ -82,8 +82,6 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
 
   console.log("OPENING TAB WITH USER: " + userRFID);
   console.log("WE HAVE PIN: " + pin);
-  //todo: if redis.exists(tabkey) then throw danger error.
-  //could mean that they are trying to override their currently open tab...
   redis.hgetall(userRFID, function (err, obj) {
     if (err) {
       res.status(500)
@@ -93,7 +91,6 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
           message: 'Something went wrong'
         });
     } else {
-      console.log("TAB ALREADY OPEN");
       if (obj) {
         res.status(409)
           .json({
@@ -130,10 +127,10 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
                 //prep request to send asynch
                 let options = clone(serverOptions);
                 options.method = 'POST';
-                options.uri = options.uri + '/v1/pi/assignment';
+                options.uri = options.uri + '/v1/scanner/assignment';
                 let scan = {
-                  "rfid_uid": userRFID,
-                  "user_uid": obj.uid,
+                  "rfid": userRFID,
+                  "uid": obj.uid,
                   "time": Date.now()
                 };
                 unsent_assignments.push(scan);
@@ -312,18 +309,7 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
 }
  */
 /*RESPONSE
-//TODO: Combine response together
-FOOD{
-    status: 'success',
-    data: {
-        name: user.name,
-        diet: user.diet,
-        isRepeat: false/true
-    },
-    message: 'Incremented Tab.'
-}
-OR
-REGULAR ENTRY{
+{
     status: 'success',
     data: {
         "uid": element.uid,
@@ -332,9 +318,10 @@ REGULAR ENTRY{
         "shirtSize": element.shirt_size,
         "diet": element.dietary_restriction || "NULL",
         "counter": 0,
-        "numScans": 0
+        "numScans": 0,
+        "isRepeat": false/true
     },
-    message: 'Some Message.'
+    message: 'Incremented Tab.'
 }
 */
 router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next) {
@@ -355,7 +342,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
   //setup sending to server asynchronously
   let scan = {
     "rfid_uid": userRFID,
-    "scan_location": location,
+    "scan_location": location.toString(),
     "scan_time": Date.now()
   };
   unsent_scans.push(scan);
@@ -367,7 +354,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
     scans: unsent_scans
   };
 
-  console.log("UNSENT SCANS: " + JSON.stringify(unsent_scans));
+  console.log("UNSENT SCANS: " + JSON.stringify(options));
 
 
   //They haven't registered and it'll still go through but make a seperate location for this.
@@ -420,26 +407,22 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                         message: 'Something went wrong'
                       });
                   } else {
-                    let retVal = {
-                      name: user.name,
-                      diet: user.diet,
-                      isRepeat: false
-                    };
+                      user["isRepeat"] = false;
                     if (parseInt(obj) > 1) {
-                      retVal.isRepeat = true;
+                        user.isRepeat = true;
                     }
 
                     res.status(200)
                       .json({
                         status: 'success',
-                        data: retVal,
+                        data: user,
                         message: 'Incremented Tab.'
                       });
                   }
 
                 });
               } else {
-                res.status(500)
+                res.status(417)
                   .json({
                     status: 'error',
                     data: obj,
@@ -487,6 +470,11 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                   } else {
                     console.log("Successfully added to tab!");
                     redis.hgetall(userRFID, function (err, user) {
+
+                        user["isRepeat"] = false;
+                        if (parseInt(user.counter) > 1) {
+                            user.isRepeat = true;
+                        }
                       console.dir(user);
                       if (user) {
                         res.status(200)
@@ -702,7 +690,7 @@ router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
             status: 'danger',
             value: 'Some resets in redis failed.'
           });
-          return res.redirect('/');
+          return res.redirect('/auth/profile');
         } else {
           console.log("Success in setting to 0.");
           //success
@@ -710,7 +698,7 @@ router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
             status: 'success',
             value: 'Successfully reset counters for all users in redis.'
           });
-          return res.redirect('/');
+          return res.redirect('/auth/profile');
 
         }
       });
@@ -720,32 +708,27 @@ router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
 
 });
 
+router.get('/removeall', helpers.ensureAdminJSON, function (req, res, next) {
 
-//close tab
-router.post('/close',
-  function (req, res, next) {
-    //let store = new Store({
-    //    'name': req.body.name,
-    //    'description': req.body.description,
-    //});
-    let userID = req.user._id.toString();
-    let merchantID = req.body.id;
-    console.log("CLOSING TAB WITH USER: " + userID + "\n and MERCHANT: " + merchantID);
+    redis.flushdb(function (err, success) {
+        if (err) {
+            console.log("ERR: " + err);
 
-
-    let tabKey = "tab:" + merchantID + "." + userID;
-
-    redis.hgetall(tabKey, function (err, tab) {
-      if (err || !tab) {
-        return next(err);
-      } else {
-        console.dir(tab);
-
-
-      }
+            req.flash('message', {
+                status: 'danger',
+                value: 'Some deletions in redis failed.'
+            });
+            return res.redirect('/auth/profile');
+        } else {
+            console.log("Success in setting to 0.");
+            //success
+            req.flash('message', {
+                status: 'success',
+                value: 'Successfully deleted all users in redis.'
+            });
+            return res.redirect('/auth/profile');
+        }
     });
-
-
-  });
+});
 
 module.exports = router;
