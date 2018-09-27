@@ -30,9 +30,6 @@ let serverOptions = require('../../lib/remoteServer');
 let unsent_scans = [];
 let unsent_assignments = [];
 
-function clone(a) {
-  return JSON.parse(JSON.stringify(a));
-}
 
 //Todo: set up failsafes for all methods!!!!
 
@@ -125,7 +122,7 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
                 console.dir(obj);
 
                 //prep request to send asynch
-                let options = clone(serverOptions);
+                let options = helpers.clone(serverOptions);
                 options.method = 'POST';
                 options.uri = options.uri + '/v1/scanner/assignment';
                 let scan = {
@@ -218,88 +215,6 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
 });
 
 
-router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
-  //let store = new Store({
-  //    'name': req.body.name,
-  //    'description': req.body.description,
-  //});
-  let options = clone(serverOptions);
-  let uri = options.uri;
-  options.uri = uri + '/v1/scanner/registrations';
-  request(options)
-    .then(function (response) {
-      // Request was successful, use the response object at will
-      //do redis stuff then
-      //todo: this is being treated synchronously when it's not synchronous fix with promises
-      let numErrors = 0;
-      let promises = [];
-      //code to build promises to run
-      response.map(function (element) {
-        promises.push(new Promise(function (resolve, reject) {
-            redis.hmset(element.pin, {
-              "uid": element.uid,
-              "pin": element.pin || "NULL",
-              "name": element.firstname + ' ' + element.lastname,
-              "shirtSize": element.shirt_size,
-              "diet": element.dietary_restriction || "NULL",
-              "counter": 0,
-              "numScans": 0
-
-            }, function (err, reply) {
-              // reply is null when the key is missing
-              if (err) {
-                //todo: make queue to reinsert into db
-                numErrors++;
-                console.log("ERROR inserting into db: " + err);
-                resolve();
-              } else {
-                console.log("Successfully opened tab with info!");
-                resolve();
-              }
-            });
-          })
-        );
-
-      });
-
-      //run promises
-      Promise.all(promises).then(function () {
-        //return to homepage with success flash.
-        if (numErrors > 0) {
-          //err
-          console.log("REDIRECTED TO ERR");
-          req.flash('message', {
-            status: 'danger',
-            value: 'Some inserts into redis failed.'
-          });
-          return res.redirect('/');
-        } else {
-          //success
-          console.log("REDIRECTED TO SUCC");
-          req.flash('message', {
-            status: 'success',
-            value: 'Successfully added all users to redis.'
-          });
-          return res.redirect('/');
-        }
-      });
-
-
-    })
-    .catch(function (err) {
-      // Something bad happened, handle the error
-      console.log(err);
-      res.status(500)
-        .json({
-          status: 'err',
-          data: err,
-          message: 'Something went wrong'
-        });
-    });
-
-
-});
-
 //DOC: increment counter to tab of rfid: https://redis.io/commands/hincrby
 //Does food count and regular workshops
 /* REQUEST
@@ -346,7 +261,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
     "scan_time": Date.now()
   };
   unsent_scans.push(scan);
-  let options = clone(serverOptions);
+  let options = helpers.clone(serverOptions);
   let uri = options.uri;
   options.uri = uri + '/v1/scanner/scans';
   options.method = 'POST';
@@ -616,7 +531,7 @@ router.get('/active-locations', function (req, res, next) {
 
   let timestamp = Date.now();
 
-  let options = clone(serverOptions);
+  let options = helpers.clone(serverOptions);
   let uri = options.uri;
   options.uri = uri + '/v1/scanner/location';
   request(options).then(function (response) {
@@ -662,73 +577,5 @@ function scan(pattern, keys, callback) {
   });
 }
 
-//DOC: Used to reset the food counter when needed for next food event
-router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
-
-  //this is the index number of the item we would like to remove from the tab
-  //test output
-  let data = [];
-  scan('*', data, function (keys) {
-    //great
-    //redis.batch().exec();
-    //build 2d array of commands
-    //['hset', 'key(rfid)', 'counter', '0']
-    let commands = [];
-    for (let i = 0; i < keys.length; i++) {
-      let command = ["hset", "", "counter", "0"];
-      command[1] = keys[i];
-      commands.push(command);
-    }
-
-    //pass in and run the commands
-    redis.batch(commands)
-      .exec(function (err, replies) {
-        if (err) {
-          console.log("ERR: " + err);
-
-          req.flash('message', {
-            status: 'danger',
-            value: 'Some resets in redis failed.'
-          });
-          return res.redirect('/auth/profile');
-        } else {
-          console.log("Success in setting to 0.");
-          //success
-          req.flash('message', {
-            status: 'success',
-            value: 'Successfully reset counters for all users in redis.'
-          });
-          return res.redirect('/auth/profile');
-
-        }
-      });
-
-  });
-
-
-});
-
-router.get('/removeall', helpers.ensureAdminJSON, function (req, res, next) {
-
-    redis.flushdb(function (err, success) {
-        if (err) {
-            console.log("ERR: " + err);
-
-            req.flash('message', {
-                status: 'danger',
-                value: 'Some deletions in redis failed.'
-            });
-            return res.redirect('/auth/profile');
-        } else {
-            console.log("Success in setting to 0.");
-            //success
-            req.flash('message', {
-                status: 'success',
-                value: 'Successfully deleted all users in redis.'
-            });
-            return res.redirect('/auth/profile');
-        }
-    });
-});
 
 module.exports = router;

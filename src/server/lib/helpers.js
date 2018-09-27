@@ -45,9 +45,13 @@ function setUserInfo(request) {
 
   return getUserInfo;
 }
+function clone(a) {
+  return JSON.parse(JSON.stringify(a));
+}
 
 
 module.exports = {
+  clone: clone,
   setUserInfo: setUserInfo,
   ensureAuthenticated: ensureAuthenticated,
   ensureScannerAuthenticated: ensureScannerAuthenticated,
