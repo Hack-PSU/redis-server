@@ -323,7 +323,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                 unsent_scans = [];
               }).catch(function (err) {
                 // Something bad happened, handle the error
-                console.log(err);
+                console.log(err.message);
                 //do not remove unsent scans
               });
 
@@ -379,7 +379,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                 unsent_scans = [];
               }).catch(function (err) {
                 // Something bad happened, handle the error
-                console.log(err);
+                console.log(err.message);
                 //do not remove unsent scans
               });
 
