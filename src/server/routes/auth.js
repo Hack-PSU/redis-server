@@ -2,7 +2,8 @@ let express = require('express');
 let router = express.Router();
 let moment = require('moment');
 let jwt = require('jsonwebtoken');
-let redis = require('../lib/redis');
+let redis = require('../lib/redis').redis;
+let redisIsConnected = require('../lib/redis').redisIsConnected;
 let serverOptions = require('../lib/remoteServer');
 let request = require("request-promise-native");
 const uuidv4 = require('uuid/v4');
@@ -193,7 +194,13 @@ router.post('/scanner/register', function(req, res, next) {
 
 
 router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
-
+    if(!redisIsConnected()){
+        req.flash('message', {
+            status: 'danger',
+            value: 'Redis Database is down.'
+        });
+        return res.redirect('/auth/profile');
+    }
     let options = helpers.clone(serverOptions);
     let uri = options.uri;
     options.uri = uri + '/v1/scanner/registrations';
@@ -260,12 +267,11 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
         .catch(function (err) {
             // Something bad happened, handle the error
             console.log(err);
-            res.status(500)
-                .json({
-                    status: 'err',
-                    data: err,
-                    message: 'Something went wrong'
-                });
+            req.flash('message', {
+                status: 'danger',
+                value: 'An Error Occurred.'
+            });
+            return res.redirect('/auth/profile');
         });
 
 
@@ -275,7 +281,13 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
 router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
 
     //this is the index number of the item we would like to remove from the tab
-    //test output
+    if(!redisIsConnected()){
+        req.flash('message', {
+            status: 'danger',
+            value: 'Redis Database is down.'
+        });
+        return res.redirect('/auth/profile');
+    }
     let data = [];
     scan('*', data, function (keys) {
         //great
@@ -318,7 +330,13 @@ router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
 });
 
 router.get('/removeall', helpers.ensureAdminJSON, function (req, res, next) {
-
+    if(!redisIsConnected()){
+        req.flash('message', {
+            status: 'danger',
+            value: 'Redis Database is down.'
+        });
+        return res.redirect('/auth/profile');
+    }
     redis.flushdb(function (err, success) {
         if (err) {
             console.log("ERR: " + err);
@@ -339,6 +357,34 @@ router.get('/removeall', helpers.ensureAdminJSON, function (req, res, next) {
         }
     });
 });
+
+router.get('/scanner/removeall', helpers.ensureAdminJSON, function (req, res, next) {
+    Scanner.remove({}, function(err) {
+        if(err){
+            console.log("ERR: " + err);
+
+            req.flash('message', {
+                status: 'danger',
+                value: 'Some deletions in mongodb failed.'
+            });
+            return res.redirect('/auth/profile');
+        }else {
+            console.log("Success in setting to 0.");
+            //success
+            req.flash('message', {
+                status: 'success',
+                value: 'Successfully deleted all scanners from mongodb.'
+            });
+            return res.redirect('/auth/profile');
+        }
+    });
+});
+
+/*
+Model.remove({}, function(err) {
+   console.log('collection removed')
+});
+ */
 
 let cursor = '0';
 

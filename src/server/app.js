@@ -13,7 +13,7 @@ let passport = require('./lib/auth');
 let mongoose = require('mongoose');
 
 //set up redis
-let redis = require('./lib/redis');
+let redis = require('./lib/redis').redis;
 
 
 

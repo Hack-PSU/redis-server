@@ -6,7 +6,8 @@ let router = express.Router();
 
 let passport = require('../../lib/auth');
 let helpers = require('../../lib/helpers');
-let redis = require('../../lib/redis');
+let redis = require('../../lib/redis').redis;
+let redisIsConnected = require('../../lib/redis').redisIsConnected;
 let request = require("request-promise-native");
 let serverOptions = require('../../lib/remoteServer');
 // using redis, create, edit and delete tabs
@@ -31,10 +32,8 @@ let unsent_scans = [];
 let unsent_assignments = [];
 
 
-//Todo: set up failsafes for all methods!!!!
 
 //authorization functions
-const requireAuth = passport.authenticate('user-mobile', {session: false});
 //all functions with "requireAuth" used to have helpers.ensureAuthenticated
 
 
@@ -79,17 +78,24 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
 
   console.log("OPENING TAB WITH USER: " + userRFID);
   console.log("WE HAVE PIN: " + pin);
+  if(!redisIsConnected()){
+      return res.status(500)
+          .json({
+              status: 'error',
+              message: 'Redis database is down'
+          });
+  }
   redis.hgetall(userRFID, function (err, obj) {
     if (err) {
-      res.status(500)
+      return res.status(500)
         .json({
           status: 'error',
-          data: err,
           message: 'Something went wrong'
         });
     } else {
+        console.log(obj);
       if (obj) {
-        res.status(409)
+        return res.status(409)
           .json({
             status: 'error',
             data: obj,
@@ -100,7 +106,7 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
           // returns error if couldn't find pin...
           if (err) {
             console.log("ERR Could not find pin: " + err);
-            res.status(500).json({
+            res.status(404).json({
               status: "error",
               data: err,
               message: "invalid pin"
@@ -140,7 +146,8 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
                   unsent_assignments = [];
                 }).catch(function (err) {
                   // Something bad happened, handle the error
-                  console.log(err);
+                  console.log(err.message);
+                  //TODO: if duplicate entry, delete that entry otherwise everything will always fail.
                   //don't delete unsent_assignments...
                 });
               }
@@ -185,12 +192,18 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
   }
   let pin = parseInt(req.body.pin, 10);
   console.log("PIN IS: " + pin);
+    if(!redisIsConnected()){
+        return res.status(500)
+            .json({
+                status: 'error',
+                message: 'Redis database is down'
+            });
+    }
   redis.hgetall(pin, function (err, obj) {
     if (err) {
-      res.status(500)
+      res.status(404)
         .json({
           status: 'error',
-          data: err,
           message: 'Does not exist or already set.'
         });
     } else {
@@ -270,8 +283,13 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
   };
 
   console.log("UNSENT SCANS: " + JSON.stringify(options));
-
-
+  if(!redisIsConnected()){
+      return res.status(500)
+          .json({
+              status: 'error',
+              message: 'Redis database is down'
+          });
+  }
   //They haven't registered and it'll still go through but make a seperate location for this.
   //need to throw an error that doesn't exist
   //redis.hget(tabKey, "numProducts", function (err, reply) {
@@ -294,7 +312,6 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
               res.status(500)
                 .json({
                   status: 'error',
-                  data: err,
                   message: 'Something went wrong'
                 });
             } else {
@@ -318,7 +335,6 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                     res.status(500)
                       .json({
                         status: 'error',
-                        data: err,
                         message: 'Something went wrong'
                       });
                   } else {
@@ -352,7 +368,6 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
               res.status(500)
                 .json({
                   status: 'error',
-                  data: err,
                   message: 'Something went wrong'
                 });
             } else {
@@ -415,7 +430,6 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                 res.status(500)
                   .json({
                     status: 'error',
-                    data: obj,
                     message: 'Something went wrong'
                   });
               }
@@ -457,6 +471,13 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
     return res.status(401).send(new Error("Invalid values passed for rfid"));
   }
   let userRFID = req.query.id;
+  if(!redisIsConnected()){
+      return res.status(500)
+          .json({
+              status: 'error',
+              message: 'Redis database is down'
+          });
+  }
   redis.hgetall(userRFID, function (err, obj) {
     if (err) {
       res.status(500)
