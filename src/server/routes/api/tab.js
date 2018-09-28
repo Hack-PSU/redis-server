@@ -269,7 +269,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
 
   //setup sending to server asynchronously
   let scan = {
-    "rfid_uid": userRFID,
+    "rfid_uid": userRFID.toString(),
     "scan_location": location.toString(),
     "scan_time": Date.now()
   };
