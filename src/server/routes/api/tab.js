@@ -273,16 +273,10 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
     "scan_location": location.toString(),
     "scan_time": Date.now()
   };
-  unsent_scans.push(scan);
-  let options = helpers.clone(serverOptions);
-  let uri = options.uri;
-  options.uri = uri + '/v1/scanner/scans';
-  options.method = 'POST';
-  options.body = {
-    scans: unsent_scans
-  };
-
-  console.log("UNSENT SCANS: " + JSON.stringify(options));
+    let options = helpers.clone(serverOptions);
+    let uri = options.uri;
+    options.uri = uri + '/v1/scanner/scans';
+    options.method = 'POST';
   if(!redisIsConnected()){
       return res.status(500)
           .json({
@@ -315,8 +309,14 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                   message: 'Something went wrong'
                 });
             } else {
+
               //actually send to server now that we know it exists
               //todo:worry about promises and mutli data usage
+                unsent_scans.push(scan);
+                options.body = {
+                    scans: unsent_scans
+                };
+                console.log("UNSENT SCANS: " + JSON.stringify(options.body));
               request(options).then(function (response) {
                 //empty list of unsent scans
                 console.dir("SUCCESS: " + response);
@@ -330,7 +330,6 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
               console.log("Incrementing FOOD counter");
               if (obj) {
                 redis.hgetall(userRFID, function (err, user) {
-                  console.dir(user);
                   if (err) {
                     res.status(500)
                       .json({
@@ -338,15 +337,24 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                         message: 'Something went wrong'
                       });
                   } else {
-                      user["isRepeat"] = false;
-                    if (parseInt(obj) > 1) {
-                        user.isRepeat = true;
+                      let retVal = {
+                          uid: user.uid,
+                          pin: user.pin,
+                          name: user.name,
+                          shirtSize: user.shirtSize,
+                          diet: user.diet,
+                          counter: user.counter,
+                          numScans: user.numScans,
+                          isRepeat: false
+                      };
+                    if (retVal.counter > 1) {
+                        retVal.isRepeat = true;
                     }
-
+                    console.dir(retVal);
                     res.status(200)
                       .json({
                         status: 'success',
-                        data: user,
+                        data: retVal,
                         message: 'Incremented Tab.'
                       });
                   }
@@ -372,6 +380,11 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                 });
             } else {
               //actually send to server now that we know it exists
+                unsent_scans.push(scan);
+                options.body = {
+                    scans: unsent_scans
+                };
+                console.log("UNSENT SCANS: " + JSON.stringify(options.body));
               //todo:worry about promises and mutli data usage
               request(options).then(function (response) {
                 //empty list of unsent scans
@@ -400,17 +413,22 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                   } else {
                     console.log("Successfully added to tab!");
                     redis.hgetall(userRFID, function (err, user) {
-
-                        user["isRepeat"] = false;
-                        if (parseInt(user.counter) > 1) {
-                            user.isRepeat = true;
-                        }
-                      console.dir(user);
                       if (user) {
+                          let retVal = {
+                              uid: user.uid,
+                              pin: user.pin,
+                              name: user.name,
+                              shirtSize: user.shirtSize,
+                              diet: user.diet,
+                              counter: user.counter,
+                              numScans: user.numScans,
+                              isRepeat: false
+                          };
+                          console.dir(retVal);
                         res.status(200)
                           .json({
                             status: 'success',
-                            data: user,
+                            data: retVal,
                             message: 'Incremented Tab.'
                           });
                       } else {
