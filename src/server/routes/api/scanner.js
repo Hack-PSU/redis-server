@@ -11,9 +11,9 @@ var Scanner = require('../../models/scanner');
 
 // get ALL users
 router.get('/scanners', helpers.ensureAdminJSON,
-  function(req, res, next) {
+  function (req, res, next) {
     Scanner.findQ()
-      .then(function(users) {
+      .then(function (users) {
         return res.status(200)
           .json({
             status: 'success',
@@ -21,7 +21,7 @@ router.get('/scanners', helpers.ensureAdminJSON,
             message: 'Retrieved users.'
           });
       })
-      .catch(function(err) {
+      .catch(function (err) {
         return next(err);
       })
       .done();
@@ -29,9 +29,9 @@ router.get('/scanners', helpers.ensureAdminJSON,
 
 // get SINGLE user
 router.get('/scanners/:id', helpers.ensureAdminJSON,
-  function(req, res, next) {
+  function (req, res, next) {
     Scanner.findByIdQ(req.params.id)
-      .then(function(user) {
+      .then(function (user) {
         res.status(200)
           .json({
             status: 'success',
@@ -39,7 +39,7 @@ router.get('/scanners/:id', helpers.ensureAdminJSON,
             message: 'Retrieved user.'
           });
       })
-      .catch(function(err) {
+      .catch(function (err) {
         return next(err);
       })
       .done();
@@ -47,9 +47,9 @@ router.get('/scanners/:id', helpers.ensureAdminJSON,
 
 // add new user
 router.post('/scanners', helpers.ensureAdminJSON,
-  function(req, res, next) {
+  function (req, res, next) {
     Scanner.findOneQ({email: req.body.email})
-      .then(function(existingUser) {
+      .then(function (existingUser) {
         if (existingUser) {
           res.status(409)
             .json({
@@ -60,7 +60,7 @@ router.post('/scanners', helpers.ensureAdminJSON,
         } else {
           var user = new User(req.body);
           user.saveQ()
-            .then(function(result) {
+            .then(function (result) {
               res.status(200)
                 .json({
                   status: 'success',
@@ -71,13 +71,13 @@ router.post('/scanners', helpers.ensureAdminJSON,
                   message: 'Created user.'
                 });
             })
-            .catch(function(err) {
+            .catch(function (err) {
               return next(err);
             })
             .done();
         }
       })
-      .catch(function(err) {
+      .catch(function (err) {
         return next(err);
       })
       .done();
@@ -85,12 +85,12 @@ router.post('/scanners', helpers.ensureAdminJSON,
 
 // update SINGLE user
 router.put('/scanners/:id', helpers.ensureAdminJSON,
-  function(req, res, next) {
+  function (req, res, next) {
     var id = req.params.id;
     var update = req.body;
-    var options = {new:true, upsert:true};
+    var options = {new: true, upsert: true};
     Scanner.findByIdAndUpdateQ(id, update, options)
-      .then(function(result) {
+      .then(function (result) {
         res.status(200)
           .json({
             status: 'success',
@@ -98,7 +98,7 @@ router.put('/scanners/:id', helpers.ensureAdminJSON,
             message: 'Updated user.'
           });
       })
-      .catch(function(err) {
+      .catch(function (err) {
         res.send(err);
       })
       .done();
@@ -106,9 +106,9 @@ router.put('/scanners/:id', helpers.ensureAdminJSON,
 
 // delete SINGLE user
 router.delete('/scanners/:id', helpers.ensureAdminJSON,
-  function(req, res, next) {
+  function (req, res, next) {
     Scanner.findByIdAndRemoveQ(req.params.id)
-      .then(function(user) {
+      .then(function (user) {
         res.status(200)
           .json({
             status: 'success',
@@ -116,7 +116,7 @@ router.delete('/scanners/:id', helpers.ensureAdminJSON,
             message: 'Removed scanner.'
           });
       })
-      .catch(function(err) {
+      .catch(function (err) {
         res.send(err);
       })
       .done();

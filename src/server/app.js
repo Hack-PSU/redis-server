@@ -16,14 +16,13 @@ let mongoose = require('mongoose');
 let redis = require('./lib/redis').redis;
 
 
-
 // *** config file *** //
 let config = require('../_config');
 
 // *** seed the database *** //
 if (process.env.NODE_ENV === 'development') {
-    let seedAdmin = require('./models/seeds/admin.js');
-    seedAdmin();
+  let seedAdmin = require('./models/seeds/admin.js');
+  seedAdmin();
 }
 
 
@@ -53,7 +52,7 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(logger);
 }
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(session({
   secret: process.env.SECRET_KEY || 'change_me',
@@ -61,7 +60,7 @@ app.use(session({
   saveUninitialized: true
 }));
 app.use(flash());
-app.use(function(req, res, next){
+app.use(function (req, res, next) {
   res.locals.success = req.flash('success');
   res.locals.danger = req.flash('danger');
   next();
@@ -77,7 +76,7 @@ app.set('dbUrl', config.mongoURI[process.env.NODE_ENV]);
 mongoose.set('useFindAndModify', false);
 //usenewparser and usecreateindex is temporary for mongoose to update their shit
 mongoose.set('useCreateIndex', true);
-mongoose.connect(app.get('dbUrl'), { useNewUrlParser: true});
+mongoose.connect(app.get('dbUrl'), {useNewUrlParser: true});
 
 // *** main routes *** //
 app.use('/', mainRoutes);
@@ -88,7 +87,7 @@ app.use('/api/v1/', scannerAPIRoutes);
 // *** error handlers *** //
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   let err = new Error('Not Found');
   err.status = 404;
   next(err);
@@ -97,7 +96,7 @@ app.use(function(req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
+  app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     /*res.render('error', {
       message: err.message,
@@ -113,7 +112,7 @@ if (app.get('env') === 'development') {
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.render('error', {
     message: err.message,

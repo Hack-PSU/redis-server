@@ -1,11 +1,13 @@
 let passport = require('passport');
+
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
   res.redirect('/auth/login');
 }
-let ensureScannerAuthenticated = passport.authenticate('scanner-api', { session: false });
+
+let ensureScannerAuthenticated = passport.authenticate('scanner-api', {session: false});
 
 function ensureAdmin(req, res, next) {
   if (req.isAuthenticated() && req.user.admin) {
@@ -45,6 +47,7 @@ function setUserInfo(request) {
 
   return getUserInfo;
 }
+
 function clone(a) {
   return JSON.parse(JSON.stringify(a));
 }

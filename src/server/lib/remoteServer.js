@@ -13,12 +13,12 @@ var serverAPIkey = process.env.SERVER_API_KEY || 'rediskey';
 server = hostname + ':' + hostport;
 console.log(server);
 var serverOptions = {
-    method: 'GET',
-    uri: server,
-    headers: {
-        'apikey': serverAPIkey
-    },
-    json: true
+  method: 'GET',
+  uri: server,
+  headers: {
+    'apikey': serverAPIkey
+  },
+  json: true
 };
 
 //test

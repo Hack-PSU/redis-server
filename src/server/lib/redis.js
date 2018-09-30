@@ -7,16 +7,16 @@ let redis;
 let isConnected = false;
 
 function redisIsConnected() {
-    return isConnected;
-}
-if(process.env.RUN_ENV){
-    console.log("FOUND WE ARE IN ENV: " + process.env.RUN_ENV);
-    redis = require('redis').createClient('6379', 'redis');
-}else{
-    console.log("FOUND NO ENV VARIABLE: " + process.env.RUN_ENV);
-    redis = require('redis').createClient('6379', 'localhost');
+  return isConnected;
 }
 
+if (process.env.RUN_ENV) {
+  console.log("FOUND WE ARE IN ENV: " + process.env.RUN_ENV);
+  redis = require('redis').createClient('6379', 'redis');
+} else {
+  console.log("FOUND NO ENV VARIABLE: " + process.env.RUN_ENV);
+  redis = require('redis').createClient('6379', 'localhost');
+}
 
 
 /*
@@ -42,18 +42,18 @@ if(process.env.RUN_ENV){
  */
 
 //connect
-redis.on('connect', function() {
-    console.log('Connected to Redis');
-    isConnected = true;
+redis.on('connect', function () {
+  console.log('Connected to Redis');
+  isConnected = true;
 
 });
 
 redis.on("error", function (err) {
-    console.log("Error " + err);
-    isConnected = false;
+  console.log("Error " + err);
+  isConnected = false;
 });
 module.exports = {
-    redis: redis,
-    redisIsConnected: redisIsConnected
+  redis: redis,
+  redisIsConnected: redisIsConnected
 };
 
