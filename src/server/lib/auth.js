@@ -38,25 +38,26 @@ passport.use('user-local', new LocalStrategy({
 );
 passport.use('user-mobile', new JwtStrategy({
     // Telling Passport to check authorization headers for JWT
-    jwtFromRequest: ExtractJwt.fromAuthHeader(),
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     // Telling Passport where to find the secret
     secretOrKey: process.env.SECRET
   },
   function (payload, done) {
     //console.log("Testing User-Mobile auth flow:  \nPayload: " + JSON.stringify(payload));
     //todo: this wont work since we've commented this out.
-    /*User.findOne({ email: payload.email }, function(err, user) {
+    User.findOne({ email: payload.email }, function(err, user) {
+      console.log("User is: " +  JSON.stringify(user));
         if (err) {
             return done(err);
         }
         if (!user) {
             return done(null, false);
+        }else if (!user.admin){
+          return done(null, false);
         }else{
-
-            return done(null, user);
+          return done(null, user);
         }
-    });*/
-    return done(err);
+    });
   }
 ));
 passport.use('scanner-api', new APIKeyStrategy(

@@ -101,6 +101,7 @@ router.post('/login', function (req, res, next) {
     });
   })(req, res, next);
 });
+
 router.post('/authenticate', function (req, res, next) {
   passport.authenticate('user-local', function (err, user, info) {
     if (err) {
@@ -119,9 +120,12 @@ router.post('/authenticate', function (req, res, next) {
       let token = generateToken(userInfo);
       res.status(200).json({
         success: true,
-        token: 'JWT ' + token,
+        token: 'Bearer ' + token,
         user: userInfo
       });
+      /*jwt.verify(token, process.env.SECRET, function(err, data){
+        console.log(err, data);
+      });*/
     }
   })(req, res, next);
 });
@@ -325,9 +329,58 @@ router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
       });
 
   });
-
-
 });
+
+//DOC: Used to reset the food counter when needed for next food event
+router.get('/mobile/resetcounter', requireAuth, function (req, res, next) {
+
+  //this is the index number of the item we would like to remove from the tab
+  if (!redisIsConnected()) {
+    return res.status(500)
+      .json({
+        status: 'error',
+        message: 'Redis database is down.'
+      });
+  }
+  let data = [];
+  scan('*', data, function (keys) {
+    //great
+    //redis.batch().exec();
+    //build 2d array of commands
+    //['hset', 'key(rfid)', 'counter', '0']
+    let commands = [];
+    for (let i = 0; i < keys.length; i++) {
+      let command = ["hset", "", "counter", "0"];
+      command[1] = keys[i];
+      commands.push(command);
+    }
+
+    //pass in and run the commands
+    redis.batch(commands)
+      .exec(function (err, replies) {
+        if (err) {
+          console.log("ERR: " + err);
+
+          return res.status(500)
+            .json({
+              status: 'error',
+              message: 'Some resets in redis failed.'
+            });
+        } else {
+          console.log("Success in setting to 0.");
+          //success
+          return res.status(200)
+            .json({
+              status: 'success',
+              message: 'Successfully reset counters for all users in redis.'
+            });
+
+        }
+      });
+
+  });
+});
+
 
 router.get('/removeall', helpers.ensureAdminJSON, function (req, res, next) {
   if (!redisIsConnected()) {

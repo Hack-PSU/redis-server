@@ -3,16 +3,16 @@
  */
 
 /*check if in docker or no*/
-var request = require("request-promise-native");
+let request = require("request-promise-native");
 
-var server;
-var hostname = process.env.SERVER_HOSTNAME || 'http://localhost';
-var hostport = process.env.SERVER_PORT || '5000';
-var serverAPIkey = process.env.SERVER_API_KEY || 'rediskey';
+let server;
+let hostname = process.env.SERVER_HOSTNAME || 'http://localhost';
+let hostport = process.env.SERVER_PORT || '5000';
+let serverAPIkey = process.env.SERVER_API_KEY || 'rediskey';
 
 server = hostname + ':' + hostport;
 console.log(server);
-var serverOptions = {
+let serverOptions = {
   method: 'GET',
   uri: server,
   headers: {
