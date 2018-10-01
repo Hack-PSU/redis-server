@@ -28,6 +28,7 @@ let serverOptions = require('../../lib/remoteServer');
 }
 */
 //todo: move queues to redis
+//TODO: Switch to maps
 let unsent_scans = [];
 let unsent_assignments = [];
 
@@ -109,7 +110,7 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
             res.status(404).json({
               status: "error",
               data: err,
-              message: "invalid pin"
+              message: "Invalid pin"
             });
           } else {
             console.log("Successfully set rfid to tab!");
@@ -136,19 +137,52 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
                   "uid": obj.uid,
                   "time": Date.now()
                 };
+                //TODO: check if this won't have race condition with unsent_assignments being reset
                 unsent_assignments.push(scan);
                 options.body = {
                   assignments: unsent_assignments
                 };
                 console.dir(unsent_assignments);
+                /*
+                  200 if everything is success
+                  207 if partial failure
+                    - ones that succeeded will have the original scan
+                    - ones that failed, it will contain an error with a status code
+                    (409 = DUPLICATE or invalid relation) (500 for other issues)
+                  400 if formatting of sent info is bad
+                  409 if Duplicate
+                  500 if everything failed
+                 */
                 request(options).then(function (response) {
-                  console.dir("SUCCESS: " + response);
-                  unsent_assignments = [];
+                  console.dir("SUCCESS: " + JSON.stringify(response));
+                  let newUnsent_assign = [];
+                  if(response.statusCode === 207){
+                    response.forEach(function (item) {
+                      if(item instanceof Error){
+                        if(item.status >= 500){
+                          //bad response from server, retry scan
+
+                          newUnsent_assign.push(item.body.scan);
+                        }else if(item.status >= 400){
+                          //bad request, drop from list
+                          console.error(item.body.message);
+                        }
+                      }
+                    });
+                  }
+                  unsent_assignments = newUnsent_assign;
+
                 }).catch(function (err) {
-                  // Something bad happened, handle the error
+                  // Something bad happened, handle the error 400 and 500 errors
                   console.log(err.message);
                   //TODO: if duplicate entry, delete that entry otherwise everything will always fail.
                   //don't delete unsent_assignments...
+                  if(err.statusCode >= 500){
+                    //bad response from server, retry scan
+                  }else{
+                    //bad request, drop from list
+                    unsent_assignments = [];
+                  }
                 });
               }
             });
@@ -216,7 +250,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
             message: 'Found.'
           });
       } else {
-        res.status(401)
+        res.status(404)
           .json({
             status: 'error',
             data: obj,
@@ -317,14 +351,46 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                     scans: unsent_scans
                 };
                 console.log("UNSENT SCANS: " + JSON.stringify(options.body));
+              /*
+                200 if everything is success
+                207 if partial failure
+                  - ones that succeeded will have the original scan
+                  - ones that failed, it will contain an error with a status code
+                  (409 = DUPLICATE or invalid relation) (500 for other issues)
+                400 if formatting of sent info is bad
+                409 if Duplicate
+                500 if everything failed
+               */
               request(options).then(function (response) {
-                //empty list of unsent scans
-                console.dir("SUCCESS: " + response);
-                unsent_scans = [];
+                console.dir("SUCCESS: " + JSON.stringify(response));
+                let newUnsent_scans = [];
+                if(response.statusCode === 207){
+                  response.forEach(function (item) {
+                    if(item instanceof Error){
+                      if(item.status >= 500){
+                        //bad response from server, retry scan
+
+                        newUnsent_scans.push(item.body.scan);
+                      }else if(item.status >= 400){
+                        //bad request, drop from list
+                        console.error(item.body.message);
+                      }
+                    }
+                  });
+                }
+                unsent_scans = newUnsent_scans;
+
               }).catch(function (err) {
-                // Something bad happened, handle the error
+                // Something bad happened, handle the error 400 and 500 errors
                 console.log(err.message);
-                //do not remove unsent scans
+                //TODO: if duplicate entry, delete that entry otherwise everything will always fail.
+                //don't delete unsent_assignments...
+                if(err.statusCode >= 500){
+                  //bad response from server, retry scan
+                }else{
+                  //bad request, drop from list
+                  unsent_scans = [];
+                }
               });
 
               console.log("Incrementing FOOD counter");
@@ -386,14 +452,46 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                 };
                 console.log("UNSENT SCANS: " + JSON.stringify(options.body));
               //todo:worry about promises and mutli data usage
+              /*
+                200 if everything is success
+                207 if partial failure
+                  - ones that succeeded will have the original scan
+                  - ones that failed, it will contain an error with a status code
+                  (409 = DUPLICATE or invalid relation) (500 for other issues)
+                400 if formatting of sent info is bad
+                409 if Duplicate
+                500 if everything failed
+               */
               request(options).then(function (response) {
-                //empty list of unsent scans
-                console.dir("SUCCESS: " + response);
-                unsent_scans = [];
+                console.dir("SUCCESS: " + JSON.stringify(response));
+                let newUnsent_scans = [];
+                if(response.statusCode === 207){
+                  response.forEach(function (item) {
+                    if(item instanceof Error){
+                      if(item.status >= 500){
+                        //bad response from server, retry scan
+
+                        newUnsent_scans.push(item.body.scan);
+                      }else if(item.status >= 400){
+                        //bad request, drop from list
+                        console.error(item.body.message);
+                      }
+                    }
+                  });
+                }
+                unsent_scans = newUnsent_scans;
+
               }).catch(function (err) {
-                // Something bad happened, handle the error
+                // Something bad happened, handle the error 400 and 500 errors
                 console.log(err.message);
-                //do not remove unsent scans
+                //TODO: if duplicate entry, delete that entry otherwise everything will always fail.
+                //don't delete unsent_assignments...
+                if(err.statusCode >= 500){
+                  //bad response from server, retry scan
+                }else{
+                  //bad request, drop from list
+                  unsent_scans = [];
+                }
               });
 
               console.log("Incrementing numScans counter");
