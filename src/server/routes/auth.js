@@ -217,6 +217,7 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
       let promises = [];
       //code to build promises to run
       response.map(function (element) {
+        console.log(element.rfid_uid);
         promises.push(new Promise(function (resolve, reject) {
             redis.hmset(element.pin, {
               "uid": element.uid,
@@ -241,6 +242,115 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
             });
           })
         );
+
+      });
+
+      //run promises
+      Promise.all(promises).then(function () {
+        //return to homepage with success flash.
+        if (numErrors > 0) {
+          //err
+          console.log("REDIRECTED TO ERR");
+          req.flash('message', {
+            status: 'danger',
+            value: 'Some inserts into redis failed.'
+          });
+          return res.redirect('/auth/profile');
+        } else {
+          //success
+          console.log("REDIRECTED TO SUCC");
+          req.flash('message', {
+            status: 'success',
+            value: 'Successfully added all users to redis.'
+          });
+          return res.redirect('/auth/profile');
+        }
+      });
+
+
+    })
+    .catch(function (err) {
+      // Something bad happened, handle the error
+      console.log(err);
+      req.flash('message', {
+        status: 'danger',
+        value: 'An Error Occurred.'
+      });
+      return res.redirect('/auth/profile');
+    });
+
+
+});
+
+//Readds everyone from server information. Recommend flushing DB before doing this.
+router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
+  if (!redisIsConnected()) {
+    req.flash('message', {
+      status: 'danger',
+      value: 'Redis Database is down.'
+    });
+    return res.redirect('/auth/profile');
+  }
+  let options = helpers.clone(serverOptions);
+  let uri = options.uri;
+  options.uri = uri + '/v1/scanner/registrations';
+  request(options)
+    .then(function (response) {
+      // Request was successful, use the response object at will
+      //do redis stuff then
+      let numErrors = 0;
+      let promises = [];
+      //code to build promises to run
+      response.map(function (element) {
+        console.log(element.rfid_uid);
+        if(element.rfid_uid == null) {
+          promises.push(new Promise(function (resolve, reject) {
+            redis.hmset(element.pin, {
+              "uid": element.uid,
+              "pin": element.pin || "NULL",
+              "name": element.firstname + ' ' + element.lastname,
+              "shirtSize": element.shirt_size,
+              "diet": element.dietary_restriction || "NULL",
+              "counter": 0,
+              "numScans": 0
+            }, function (err, reply) {
+              // reply is null when the key is missing
+              if (err) {
+                //todo: make queue to reinsert into db
+                numErrors++;
+                console.log("ERROR inserting into db: " + err);
+                resolve();
+              } else {
+                console.log("Successfully opened tab with info!");
+                resolve();
+              }
+            });
+          }));
+        }else{
+          promises.push(new Promise(function (resolve, reject) {
+            //REMINDER: RFID's set like this will have no scan data for it. DO NOT RESET REDIS WHEN DOING LUNCH.
+            redis.hmset(element.rfid_uid, {
+              "uid": element.uid,
+              "pin": element.pin || "NULL",
+              "name": element.firstname + ' ' + element.lastname,
+              "shirtSize": element.shirt_size,
+              "diet": element.dietary_restriction || "NULL",
+              "counter": 0,
+              "numScans": 0
+            }, function (err, reply) {
+              // reply is null when the key is missing
+              if (err) {
+                //todo: make queue to reinsert into db
+                numErrors++;
+                console.log("ERROR inserting into db: " + err);
+                resolve();
+              } else {
+                console.log("Successfully opened tab with info!");
+                resolve();
+              }
+            });
+          }));
+        }
 
       });
 
