@@ -673,7 +673,7 @@ router.get('/active-locations', function (req, res, next) {
   options.uri = uri + '/v1/scanner/location';
   request(options).then(function (response) {
     //empty list of unsent scans
-    console.dir("SUCCESS: " + response);
+    console.dir("SUCCESS: " + JSON.stringify(response));
     res.status(200).json({
       status: 'success',
       locations: response,
