@@ -50,9 +50,9 @@ docker-compose stop
     ```
  1. Install MongoDB (skip if already done):
     - MacOS using Homebrew: `brew update; brew install mongodb`
-    - Ubuntu using apt-get: `sudo apt-get install -y mongodb-org`
-    - Red Hat using yum: `sudo yum install -y mongodb-org`
-    - Amazon using yum: `sudo yum install -y mongodb-org`
+    - Ubuntu: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+    - Red Hat: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/
+    - Amazon Linux: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-amazon/
     - For other methods check here: https://docs.mongodb.com/manual/administration/install-community/
 
 1. Run Redis Server (skip if already done):
@@ -61,7 +61,7 @@ docker-compose stop
     ```
  1. Run MongoDB (skip if already done):
     ```
-    mongod
+    mongod --config /usr/local/etc/mongod.conf
     ```
 1. Clone and install dependencies:
     ```
