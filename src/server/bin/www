@@ -20,7 +20,7 @@ app.set('port', port);
 /**
  * Create HTTPS server.
  */
-var options = {
+/*var options = {
   key: fs.readFileSync('./src/server/bin/keys/key.pem'),
   cert: fs.readFileSync('./src/server/bin/keys/cert.pem'),
   passphrase: "hackDaddy",
@@ -29,12 +29,12 @@ var options = {
 };
 
 var server = https.createServer(options, app);
-
+*/
 /**
  * Create HTTP server.
  */
 
-//var server = http.createServer(app);
+var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.

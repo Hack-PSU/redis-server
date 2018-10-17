@@ -60,7 +60,8 @@ cd redis-server
 npm install
 ```
 1. Update the config:
-  - Rename the *.env_sample* file to *.env* and update
+  - Rename the *.env_sample* file to *.env* and update all the *change_me*
+  values to values that you would like to use.
 1. Run the app - `npm start`
 
 > The database, if empty, is seeded with an admin user - username: *ad@min.com* / password: *admin*
