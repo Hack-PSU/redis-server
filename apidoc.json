@@ -1,7 +1,7 @@
 {
   "name": "Redis API Documentation",
   "version": "1.0.0",
-  "description": "HackPSU Redis Server API",
+  "description": "Redis Server API",
   "template": {
     "forceLanguage": "en"
   }

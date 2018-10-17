@@ -177,7 +177,7 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
  * @apiDescription
  * Authenticate and register scanner on Redis-Server. This will provide an API Key in return which the scanner will use
  * for any and all requests to redis.
- * @apiPermission None
+ * @apiPermission Admin
  *
  * @apiParam {String} pin Pin to use to prove that valid scanner is connecting to Redis. (Set valid pin in .env file)
  * @apiParamExample {json} Request Body Example
@@ -249,7 +249,7 @@ router.post('/scanner/register', function (req, res, next) {
  * @apiDescription
  * Update Redis Database with user information. All information will be stored with their pin as the key.
  * Users that have been assigned RFID tags will not be changed by this update.
- * @apiPermission None
+ * @apiPermission Admin
  *
  *
  * @apiSuccess {HTML} Returns Success page
@@ -453,6 +453,21 @@ router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
 });
 
 //DOC: Used to reset the food counter when needed for next food event
+
+/**
+ * @api {get} /auth/resetcounter Reset Counter
+ * @apiVersion 1.0.0
+ * @apiName ResetCounter
+ * @apiGroup Admin
+ * @apiDescription
+ * Used to reset the food counter when needed for next food event.
+ * @apiPermission Admin
+ *
+ *
+ * @apiSuccess {HTML} SuccessFlash Returns Success page
+ *
+ * @apiError {HTML} ErrorFlash Returns Error Message.
+ */
 router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
 
   //this is the index number of the item we would like to remove from the tab
@@ -552,7 +567,20 @@ router.get('/mobile/resetcounter', requireAuth, function (req, res, next) {
   });
 });
 
-
+/**
+ * @api {get} /auth/removeall Empty Redis
+ * @apiVersion 1.0.0
+ * @apiName EmptyRedis
+ * @apiGroup Admin
+ * @apiDescription
+ * Remove all users from Redis. Flush all information from redis.
+ * @apiPermission Admin
+ *
+ *
+ * @apiSuccess {HTML} SuccessFlash Returns Success page
+ *
+ * @apiError {HTML} ErrorFlash Returns Error Message.
+ */
 router.get('/removeall', helpers.ensureAdminJSON, function (req, res, next) {
   if (!redisIsConnected()) {
     req.flash('message', {
@@ -582,6 +610,20 @@ router.get('/removeall', helpers.ensureAdminJSON, function (req, res, next) {
   });
 });
 
+/**
+ * @api {get} /auth/removeall Remove all Scanners
+ * @apiVersion 1.0.0
+ * @apiName EmptyScanners
+ * @apiGroup Admin
+ * @apiDescription
+ * Remove all scanner objects from MongoDB. Cancels all active api keys and requires scanners to get new ones.
+ * @apiPermission Admin
+ *
+ *
+ * @apiSuccess {HTML} SuccessFlash Returns Success page
+ *
+ * @apiError {HTML} ErrorFlash Returns Error Message.
+ */
 router.get('/scanner/removeall', helpers.ensureAdminJSON, function (req, res, next) {
   Scanner.remove({}, function (err) {
     if (err) {
