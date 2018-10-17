@@ -41,30 +41,43 @@ docker-compose stop
 
 ### Using NPM & Redis Directly
 1. Install Redis (skip if already done):
-```
+    ```
     wget http://download.redis.io/redis-stable.tar.gz
     tar xvzf redis-stable.tar.gz
     cd redis-stable
     make
     sudo make install
-```
+    ```
+ 1. Install MongoDB (skip if already done):
+     MacOS using Homebrew: `brew update; brew install mongodb`
+    - Ubuntu using apt-get: `sudo apt-get install -y mongodb-org`
+    - Red Hat using yum: `sudo yum install -y mongodb-org`
+    - Amazon using yum: `sudo yum install -y mongodb-org`
+    - For other methods check here: https://docs.mongodb.com/manual/administration/install-community/
 
 1. Run Redis Server (skip if already done):
-```
-redis-server
-```
+    ```
+    redis-server
+    ```
+ 1. Run MongoDB (skip if already done):
+    ```
+    mongod
+    ```
 1. Clone and install dependencies:
-```
-git clone [link to repo]
-cd redis-server
-npm install
-```
+    ```
+    git clone https://github.com/Hack-PSU/redis-server.git
+    cd redis-server
+    npm install
+    ```
 1. Update the config:
-  - Rename the *.env_sample* file to *.env* and update all the *change_me*
-  values to values that you would like to use.
+    - Rename the *.env_sample* file to *.env* and update all the *change_me* 
+    values to values that you would like to use.
 1. Run the app - `npm start`
+1. Go to `http://localhost:3000` to see running website.
 
 > The database, if empty, is seeded with an admin user - username: *ad@min.com* / password: *admin*
+
+## Enable HTTPS
 
 ## Documentation
 Documentation is stored in the `doc/` folder. To view it, open the 
