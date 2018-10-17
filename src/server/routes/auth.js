@@ -169,6 +169,51 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
   });
 });
 
+/**
+ * @api {post} /auth/scanner/register Register Scanner
+ * @apiVersion 1.0.0
+ * @apiName RegisterScanner
+ * @apiGroup Admin
+ * @apiDescription
+ * Authenticate and register scanner on Redis-Server. This will provide an API Key in return which the scanner will use
+ * for any and all requests to redis.
+ * @apiPermission None
+ *
+ * @apiParam {String} pin Pin to use to prove that valid scanner is connecting to Redis. (Set valid pin in .env file)
+ * @apiParamExample {json} Request Body Example
+ *     {
+ *       pin: "MASTER_KEY"
+ *     }
+ *
+ * @apiSuccess {String} status          Status of response.
+ * @apiSuccess {Object} data            User tab information.
+ * @apiSuccess {String} data.name       Auto-Generated Name for Scanner
+ * @apiSuccess {String} data._id        Scanner's universal ID
+ * @apiSuccess {String} data.apikey     The API key that the scanner can now use
+ * @apiSuccess {String} message         Response Message.
+ *
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       status: "success",
+ *       data: {
+ *         name: "2018-10-01T00:57:23.370Z",
+ *         _id: "5bb170f354fd0f590ddf4103",
+ *         apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *       },
+ *       message: "Scanner Added. API Key Generated."
+ *     }
+ * @apiErrorExample {json} 401 Response
+ *     HTTP/1.1 401 Unauthorized
+ *     "Invalid pin passed"
+ * @apiErrorExample {json} 500 Response
+ *     HTTP/1.1 500 Server Error
+ *     {
+ *       status: "error",
+ *       data: {err},
+ *       message: "There was an error."
+ *     }
+ */
 router.post('/scanner/register', function (req, res, next) {
   if (!req.body.pin || req.body.pin !== process.env.SCANNER_ADMIN_PIN) {
     console.error("Invalid pin passed");
@@ -196,7 +241,23 @@ router.post('/scanner/register', function (req, res, next) {
   });
 });
 
-
+/**
+ * @api {get} /auth/updatedb Update Redis DB
+ * @apiVersion 1.0.0
+ * @apiName UpdateRedis
+ * @apiGroup Admin
+ * @apiDescription
+ * Update Redis Database with user information. All information will be stored with their pin as the key.
+ * Users that have been assigned RFID tags will not be changed by this update.
+ * @apiPermission None
+ *
+ *
+ * @apiSuccess {HTML} Returns Success page
+ *
+ * @apiErrorExample {json} 401 Response
+ *     HTTP/1.1 401 Unauthorized
+ *     "Invalid pin passed"
+ */
 router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
   if (!redisIsConnected()) {
     req.flash('message', {

@@ -10,23 +10,38 @@ let redis = require('../../lib/redis').redis;
 let redisIsConnected = require('../../lib/redis').redisIsConnected;
 let request = require("request-promise-native");
 let serverOptions = require('../../lib/remoteServer');
-// using redis, create, edit and delete tabs
-/*
-{
-    status: 'success',
-        data: {
-                            "uid": element.uid,
-                            "pin": element.pin || "NULL",
-                            "name": element.firstname + ' ' + element.lastname,
-                            "shirtSize": element.shirt_size,
-                            "diet": element.dietary_restriction || "NULL",
-                            "counter": 0,
-                            "numScans": 0
 
-                        },
-    message: 'Incremented Tab.'
-}
-*/
+
+/**
+ * @apiDefine UserData
+ *
+ * @apiSuccess {String} status          Status of response.
+ * @apiSuccess {Object} data            User tab information.
+ * @apiSuccess {String} data.uid        User's universal ID in remote db
+ * @apiSuccess {String} data.pin        User's pin used to check-in
+ * @apiSuccess {String} data.name       User's full name
+ * @apiSuccess {String} data.shirtSize  User's shirt size
+ * @apiSuccess {String} data.diet       User's dietary restrictions
+ * @apiSuccess {Number} data.counter    Food counter for user.
+ * @apiSuccess {Number} data.numScans   Number of scans taken for user (excluding food).
+ * @apiSuccess {String} message         Response Message.
+ *
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "status": "success",
+ *       "data": {
+ *         "uid": "nXNR0z8CrgT4TduIM6y0DpN6wRj1",
+ *         "pin": "96",
+ *         "name": "Dat Boi",
+ *         "shirtSize": "M",
+ *         "diet": "Vegetarian",
+ *         "counter": 0,
+ *         "numScans": 0
+ *       },
+ *       "message": "Successfully completed task."
+ *     }
+ */
 //todo: move queues to redis
 //TODO: Switch to maps
 let unsent_scans = [];
@@ -55,18 +70,52 @@ let unsent_assignments = [];
 }
  */
 /**
- * @api {get} /tabs/setup Register RFID Band to User
+ * @api {post} /tabs/setup Register RFID Band to User
  * @apiVersion 1.0.0
- * @apiName Register RFID Band to User
+ * @apiName Register RFID
  * @apiGroup RFID
- * @apiPermission TeamMemberPermission
+ * @apiDescription
+ * Register RFID Band to User. Sends assignment to main server, while locally replacing user key to RFID code.
+ * @apiPermission Scanner
  *
- * @apiParam {Number} id=Math.inf Limit to a certain number of responses
- * @apiParam {Number} offset=0 The offset to start retrieving users from. Useful for pagination
+ * @apiParam {Number} id  RFID code to set to user.
+ * @apiParam {Number} pin Pin of user to add rfid code to.
+ * @apiParam {String} apikey API key for scanner to authenticate.
+ * @apiParamExample {json} Request Body Example
+ *     {
+ *       id: "RFID1",
+ *       pin: 94,
+ *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *     }
  *
- * @apiUse AuthArgumentRequired
+ * @apiSuccess {String} status  Status of response.
+ * @apiSuccess {Object} data    Response from Redis.
+ * @apiSuccess {String} message Response message.
  *
- * @apiSuccess {Array} Array of registered hackers
+ * @apiSuccessExample {json} Success Response:
+ *    HTTP/1.1 200 OK
+ *    {
+ *      status: "success",
+ *      data: "OK",
+ *      message: "Created tab."
+ *    }
+ * @apiErrorExample {json} 401 Response
+ *     HTTP/1.1 401 Unauthorized
+ *     "Invalid values passed for rfid or pin"
+ * @apiErrorExample {json} 404 Response
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       status: "error",
+ *       data: {'err...'},
+ *       message: "Invalid pin"
+ *     }
+ * @apiErrorExample {json} 409 Response
+ *     HTTP/1.1 409 Not Found
+ *     {
+ *       status: 'error',
+ *       data: {'Existing User data...'},
+ *       message: 'RFID Tag already opened.'
+ *     }
  */
 router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body.id || !req.body.pin){
@@ -198,27 +247,37 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
 });
 
 
-//DOC: check if pin exists
-/* REQUEST
-{
-    pin: <<base 14 pin>>
-}
+/**
+ * @api {post} /tabs/getpin Get User with Pin
+ * @apiVersion 1.0.0
+ * @apiName GetPin
+ * @apiGroup RFID
+ * @apiDescription
+ * Get all user information from redis that hasn't been assigned an rfid tag.
+ * Pin is used to currently index user in redis if rfid hasn't been set.
+ * @apiPermission Scanner
+ *
+ * @apiParam {Number} pin Pin of user.
+ * @apiParam {String} apikey API key for scanner to authenticate.
+ * @apiParamExample {json} Request Body Example
+ *     {
+ *       pin: 94,
+ *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *     }
+ *
+ * @apiUse UserData
+ *
+ * @apiErrorExample {json} 401 Response
+ *     HTTP/1.1 401 Unauthorized
+ *     "Invalid values passed for pin"
+ * @apiErrorExample {json} 404 Response
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       status: "error",
+ *       data: {},
+ *       message: "Did not find anything"
+ *     }
  */
-/*RESPONSE
-{
-    status: 'success',
-    data: {
-        "uid": element.uid,
-        "pin": element.pin || "NULL",
-        "name": element.firstname + ' ' + element.lastname,
-        "shirtSize": element.shirt_size,
-        "diet": element.dietary_restriction || "NULL",
-        "counter": 0,
-        "numScans": 0
-    },
-    message: 'Some Message.'
-}
-*/
 router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body.pin){
     console.error("Invalid values passed for pin");
@@ -286,6 +345,73 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
     message: 'Incremented Tab.'
 }
 */
+/**
+ * @api {post} /tabs/add Add User Scan
+ * @apiVersion 1.0.0
+ * @apiName ScanData
+ * @apiGroup RFID
+ * @apiDescription
+ * Store and log scan location, rfid tag and timestamp. Verify if user is allowed to enter, and send response back.
+ * Redis will also send the scan data to the main server asynchronously. Scanners will not find out if those requests will succeed or fail.
+ * @apiPermission Scanner
+ *
+ * @apiParam {Number} id        RFID code of user.
+ * @apiParam {Number} location  Location id that scan occurred at. (Set id's in admin app)
+ * @apiParam {String} apikey    API key for scanner to authenticate.
+ * @apiParamExample {json} Request Body Example
+ *     {
+ *       id: 1695694065,
+ *       location: 3,
+ *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *     }
+ *
+ * @apiSuccess {String} status          Status of response.
+ * @apiSuccess {Object} data            User tab information.
+ * @apiSuccess {String} data.uid        User's universal ID in remote db
+ * @apiSuccess {String} data.pin        User's pin used to check-in
+ * @apiSuccess {String} data.name       User's full name
+ * @apiSuccess {String} data.shirtSize  User's shirt size
+ * @apiSuccess {String} data.diet       User's dietary restrictions
+ * @apiSuccess {Number} data.counter    Food counter for user.
+ * @apiSuccess {Number} data.numScans   Number of scans taken for user (excluding food).
+ * @apiSuccess {Boolean} data.isRepeat  Whether user is a repeat scan or not (essentially allow/deny).
+ * @apiSuccess {String} message         Response Message.
+ *
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "status": "success",
+ *       "data": {
+ *         "uid": "nXNR0z8CrgT4TduIM6y0DpN6wRj1",
+ *         "pin": "96",
+ *         "name": "Dat Boi",
+ *         "shirtSize": "M",
+ *         "diet": "Vegetarian",
+ *         "counter": 0,
+ *         "numScans": 0,
+ *         "isRepeat": false
+ *       },
+ *       "message": "Successfully completed task."
+ *     }
+ * @apiErrorExample {json} 401 Response
+ *     HTTP/1.1 401 Unauthorized
+ *     "Invalid values passed for pin"
+ * @apiErrorExample {json} 404 Response
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       status: "error",
+ *       data: 0,
+ *       message: "Does not exist."
+ *     }
+ * @apiErrorExample {json} 417 Response
+ *    HTTP/1.1 417 Expectation Failed
+ *    {
+ *      status: 'error',
+ *      data: {...},
+ *      message: 'Couldn\'t find rfid'
+ *    }
+ *
+ */
 router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next) {
   //let store = new Store({
   //    'name': req.body.name,
@@ -327,7 +453,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
 
     } else {
       if (val == 0) {
-        res.status(401)
+        res.status(404)
           .json({
             status: 'error',
             data: val,
@@ -581,6 +707,43 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
 }
  */
 
+/**
+ * @api {post} /tabs/getpin Get User with RFID tag
+ * @apiVersion 1.0.0
+ * @apiName GetRFID
+ * @apiGroup RFID
+ * @apiDescription
+ * Get all user information from redis for an RFID tag if it has been assigned.
+ * RFID is used to index user in redis after user has been setup.
+ * @apiPermission Scanner
+ *
+ * @apiParam {Number} id      RFID code of user.
+ * @apiParam {String} apikey  API key for scanner to authenticate.
+ * @apiParamExample {json} Request Body Example
+ *     {
+ *       id: 1695694065,
+ *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *     }
+ *
+ * @apiUse UserData
+ *
+ * @apiErrorExample {json} 401 Response
+ *     HTTP/1.1 401 Unauthorized
+ *     "Invalid values passed for rfid"
+ * @apiErrorExample {json} 404 Response
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       status: "error",
+ *       data: {},
+ *       message: "Did not find anything"
+ *     }
+ * @apiErrorExample {json} 500 Response
+ *     HTTP/1.1 500 Server Error
+ *     {
+ *       status: "error",
+ *       message: "Redis database is down"
+ *     }
+ */
 router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.query.id){
     console.error("Invalid values passed for rfid");
@@ -596,7 +759,7 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
   }
   redis.hgetall(userRFID, function (err, obj) {
     if (err) {
-      res.status(500)
+      res.status(404)
         .json({
           status: 'error',
           data: err,
@@ -612,7 +775,7 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
             message: 'Found.'
           });
       } else {
-        res.status(401)
+        res.status(404)
           .json({
             status: 'error',
             data: obj,
@@ -626,19 +789,21 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
 });
 
 /**
- * @api {get} /tabs/active-locations Get all active locations
+ * @api {get} /tabs/active-locations Get all Active Locations
  * @apiVersion 1.0.0
- * @apiName Get all active locations
+ * @apiName GetActiveLocations
  * @apiGroup RFID
- * @apiPermission TeamMemberPermission
+ * @apiPermission Scanner
  *
- *
- * @apiUse AuthArgumentRequired
- *
- * @apiSuccess {Array} Array of currently active locations
- * @apiSuccessExample {json} Success-Response:
+ * @apiSuccess {String} status    Status of response.
+ * @apiSuccess {Number} length    Length of active locations returned
+ * @apiSuccess {Array} locations  Array of currently active locations
+ * @apiSuccess {String} message   Response message.
+ * @apiSuccessExample {json} Success Response:
  *  HTTP/1.1 200 OK
  *  {
+ *    status: 'success',
+ *    length: 5,
  *    locations: [
       {
         "location_name": "Cybertorium",
@@ -660,7 +825,8 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
         "location_name": "Game room",
         "uid": 15
       }
-    ]
+    ],
+    message: 'Found active locations.'
    }
  *
  */
