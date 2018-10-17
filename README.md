@@ -49,7 +49,7 @@ docker-compose stop
     sudo make install
     ```
  1. Install MongoDB (skip if already done):
-     MacOS using Homebrew: `brew update; brew install mongodb`
+    - MacOS using Homebrew: `brew update; brew install mongodb`
     - Ubuntu using apt-get: `sudo apt-get install -y mongodb-org`
     - Red Hat using yum: `sudo yum install -y mongodb-org`
     - Amazon using yum: `sudo yum install -y mongodb-org`
