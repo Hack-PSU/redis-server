@@ -42,11 +42,8 @@ docker-compose stop
 ### Using NPM & Redis Directly
 1. Install Redis (skip if already done):
 ```
-    sudo apt-get update
-    sudo apt-get install build-essential tcl
-    cd /tmp
-    curl -O http://download.redis.io/redis-stable.tar.gz
-    tar xzvf redis-stable.tar.gz
+    wget http://download.redis.io/redis-stable.tar.gz
+    tar xvzf redis-stable.tar.gz
     cd redis-stable
     make
     sudo make install
