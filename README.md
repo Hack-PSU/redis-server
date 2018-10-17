@@ -69,7 +69,9 @@ npm install
 > The database, if empty, is seeded with an admin user - username: *ad@min.com* / password: *admin*
 
 ## Documentation
-Documentation is stored in the `doc/` folder. We use `apidoc.js` to generate the files.
+Documentation is stored in the `doc/` folder. To view it, open the 
+`index.html` file inside the folder using a browser. 
+We use `apidoc.js` to generate the files.
 To update the generated doc files, run:
 ```
 npm run apidoc
