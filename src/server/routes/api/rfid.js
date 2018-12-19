@@ -52,7 +52,7 @@ let unsent_assignments = [];
 //all functions with "requireAuth" used to have helpers.ensureAuthenticated
 
 /**
- * @api {post} /rfid/setup Register RFID Band to User
+ * @api {post} /rfid/assignment Register RFID Band to User
  * @apiVersion 1.0.0
  * @apiName Register RFID
  * @apiGroup RFID
@@ -99,8 +99,7 @@ let unsent_assignments = [];
  *       message: 'RFID Tag already opened.'
  *     }
  */
-//TODO: rename to /scanner/assignment
-router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, next) {
+router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body || !req.body.rfid || !req.body.pin){
     console.error("Invalid values passed for rfid or pin");
     return res.status(401).send(new Error("Invalid values passed for rfid or pin"));
@@ -305,7 +304,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
 
 //DOC: increment counter to tab of rfid: https://redis.io/commands/hincrby
 /**
- * @api {post} /rfid/add Add User Scan
+ * @api {post} /rfid/scan Add User Scan
  * @apiVersion 1.0.0
  * @apiName ScanData
  * @apiGroup RFID
@@ -371,7 +370,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
  *    }
  *
  */
-router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next) {
+router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body || !req.body.location || !req.body.rfid){
     console.error("Invalid values passed for location or id");
     return res.status(401).send(new Error("Invalid values passed for location or id"));
@@ -549,7 +548,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
 
 
 /**
- * @api {post} /rfid/getpin Get User Info with RFID tag
+ * @api {post} /rfid/user-info Get User Info with RFID tag
  * @apiVersion 1.0.0
  * @apiName GetRFID
  * @apiGroup RFID
