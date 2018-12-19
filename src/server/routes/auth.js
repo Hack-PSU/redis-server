@@ -611,7 +611,7 @@ router.get('/removeall', helpers.ensureAdminJSON, function (req, res, next) {
 });
 
 /**
- * @api {get} /auth/removeall Remove all Scanners
+ * @api {get} /auth/scanner/removeall Remove all Scanners
  * @apiVersion 1.0.0
  * @apiName EmptyScanners
  * @apiGroup Admin
