@@ -2,8 +2,7 @@
  * Created by PranavJain on 2/20/17.
  */
 let express = require('express');
-let router = express.Router();
-
+let router = express.Router({});
 let passport = require('../../lib/auth');
 let helpers = require('../../lib/helpers');
 let redis = require('../../lib/redis').redis;
@@ -53,7 +52,7 @@ let unsent_assignments = [];
 //all functions with "requireAuth" used to have helpers.ensureAuthenticated
 
 /**
- * @api {post} /tabs/setup Register RFID Band to User
+ * @api {post} /rfid/setup Register RFID Band to User
  * @apiVersion 1.0.0
  * @apiName Register RFID
  * @apiGroup RFID
@@ -231,7 +230,7 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
 
 
 /**
- * @api {post} /tabs/getpin Get User with Pin
+ * @api {post} /rfid/getpin Get User with Pin
  * @apiVersion 1.0.0
  * @apiName GetPin
  * @apiGroup RFID
@@ -306,7 +305,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
 
 //DOC: increment counter to tab of rfid: https://redis.io/commands/hincrby
 /**
- * @api {post} /tabs/add Add User Scan
+ * @api {post} /rfid/add Add User Scan
  * @apiVersion 1.0.0
  * @apiName ScanData
  * @apiGroup RFID
@@ -550,7 +549,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
 
 
 /**
- * @api {post} /tabs/getpin Get User Info with RFID tag
+ * @api {post} /rfid/getpin Get User Info with RFID tag
  * @apiVersion 1.0.0
  * @apiName GetRFID
  * @apiGroup RFID
@@ -631,7 +630,7 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
 });
 
 /**
- * @api {get} /tabs/active-locations Get all Active Locations
+ * @api {get} /rfid/active-locations Get all Active Locations
  * @apiVersion 1.0.0
  * @apiName GetActiveLocations
  * @apiGroup RFID
