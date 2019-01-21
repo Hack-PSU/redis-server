@@ -39,6 +39,11 @@ docker-compose start
 docker-compose stop
 ```
 
+To bring everything down and remove the containers, use:
+```
+docker-compose down
+```
+
 ### Using NPM & Redis Directly
 1. Install Redis (skip if already done):
     ```
