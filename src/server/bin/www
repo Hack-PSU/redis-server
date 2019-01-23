@@ -6,35 +6,39 @@
 
 let app = require('../app');
 let debug = require('debug')('express4:server');
-var http = require('http');
-var https = require('https');
-var fs = require("fs");
+let http = require('http');
+let https = require('https');
+let fs = require("fs");
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+let port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
-/**
- * Create HTTPS server.
- */
-/*var options = {
-  key: fs.readFileSync('./src/server/bin/keys/key.pem'),
-  cert: fs.readFileSync('./src/server/bin/keys/cert.pem'),
-  passphrase: "hackDaddy",
-  requestCert: false,
-  rejectUnauthorized: false
-};
+let server = null;
+if(process.env.USE_HTTPS){
+  /**
+   * Create HTTPS server.
+   */
+  var options = {
+    key: fs.readFileSync('./src/server/bin/keys/key.pem'),
+    cert: fs.readFileSync('./src/server/bin/keys/cert.pem'),
+    passphrase: "hackDaddy",
+    requestCert: false,
+    rejectUnauthorized: false
+  };
 
-var server = https.createServer(options, app);
-*/
-/**
- * Create HTTP server.
- */
+  server = https.createServer(options, app);
+}else{
+  /**
+   * Create HTTP server.
+   */
 
-var server = http.createServer(app);
+  server = http.createServer(app);
+}
+
 
 /**
  * Listen on provided port, on all network interfaces.
