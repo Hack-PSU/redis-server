@@ -80,7 +80,7 @@ docker-compose down
 1. Run the app - `npm start`
 1. Go to `http://localhost:3000` to see running website.
 
-> The database, if empty, is seeded with an admin user - username: *ad@min.com* / password: *admin*
+> The database, if empty, is seeded with an admin user - username: *ad@min.com* / password: *change_me*
 
 ## Enable HTTPS
 

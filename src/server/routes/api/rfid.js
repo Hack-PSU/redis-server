@@ -549,7 +549,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, nex
 
 
 /**
- * @api {post} /rfid/user-info Get User Info with RFID tag
+ * @api {post} /rfid/user-info Get User Info with WID tag
  * @apiVersion 1.0.0
  * @apiName GetRFID
  * @apiGroup RFID

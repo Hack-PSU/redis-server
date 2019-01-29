@@ -80,7 +80,7 @@ mongoose.connect(app.get('dbUrl'), {useNewUrlParser: true});
 
 // *** main routes *** //
 app.use('/', mainRoutes);
-app.use('/auth', authRoutes);
+app.use('/auth/', authRoutes);
 app.use('/rfid/', rfidRoutes);
 app.use('/api/v1/', scannerAPIRoutes);
 

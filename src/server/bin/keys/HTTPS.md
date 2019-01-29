@@ -21,3 +21,4 @@
     1. Comment the `Create HTTP server.` section
 1. Get the fingerprint of the certificate: `openssl x509 -noout -in cert.pem -fingerprint`
 1. Save the fingerprint for verifying Redis identity on Scanners.
+TODO: make script for this

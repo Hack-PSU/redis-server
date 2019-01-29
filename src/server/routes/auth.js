@@ -273,12 +273,11 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
     .then(function (response) {
       // Request was successful, use the response object at will
       //do redis stuff then
-      //todo: this is being treated synchronously when it's not synchronous fix with promises
       let numErrors = 0;
       let promises = [];
       //code to build promises to run
       response.map(function (element) {
-        console.log(element.rfid_uid);
+        //console.log(element.rfid_uid);
         promises.push(new Promise(function (resolve, reject) {
             redis.hmset(element.pin, {
               "uid": element.uid,
@@ -297,7 +296,7 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
                 console.log("ERROR inserting into db: " + err);
                 resolve();
               } else {
-                console.log("Successfully opened tab with info!");
+                //console.log("Successfully opened tab with info!");
                 resolve();
               }
             });
@@ -344,6 +343,24 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
 });
 
 //Readds everyone from server information. Recommend flushing DB before doing this.
+/**
+ * @api {get} /auth/reloaddb Reload Redis DB
+ * @apiVersion 1.0.0
+ * @apiName UpdateRedis
+ * @apiGroup Admin
+ * @apiDescription
+ * Update Redis Database with user information. Unless user has been assigned an RFID tag,
+ * all information will be stored with their pin as the key.
+ * Users that have been assigned RFID tags will lose their scan data on redis.
+ * @apiPermission Admin
+ *
+ *
+ * @apiSuccess {HTML} Returns Success page
+ *
+ * @apiErrorExample {json} 401 Response
+ *     HTTP/1.1 401 Unauthorized
+ *     "Invalid pin passed"
+ */
 router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
   if (!redisIsConnected()) {
     req.flash('message', {
@@ -406,7 +423,7 @@ router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
                 console.log("ERROR inserting into db: " + err);
                 resolve();
               } else {
-                console.log("Successfully opened tab with info!");
+                //console.log("Successfully opened tab with info!");
                 resolve();
               }
             });

@@ -4,6 +4,7 @@
   "description": "Node, express, redis",
   "scripts": {
     "start": "node ./src/server/bin/www",
+    "test": "mocha --exit --timeout 10000 --recursive",
     "cov": "./node_modules/.bin/istanbul cover _mocha -- -R spec",
     "send-coverage": "./node_modules/.bin/istanbul cover --report lcovonly ./node_modules/.bin/_mocha && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "apidoc": "apidoc -i ./src -o doc/"
@@ -51,6 +52,9 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "apidoc": "^0.17.7"
+    "apidoc": "^0.17.7",
+    "chai": "^4.2.0",
+    "chai-http": "^4.2.1",
+    "mocha": "^5.2.0"
   }
 }
