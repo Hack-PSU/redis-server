@@ -20,7 +20,7 @@ let redis = require('./lib/redis').redis;
 let config = require('../_config');
 
 // *** seed the database *** //
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV) {
   let seedAdmin = require('./models/seeds/admin.js');
   seedAdmin();
 }

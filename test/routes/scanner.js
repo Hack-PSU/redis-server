@@ -53,6 +53,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
   let apikey = "";
   //part of test data on redis
   let pin = 512;
+  let pinName = "Caitlin Sanders";
   let wristbandID = "TEST_WID";
   let agent = chai.request.agent(app);
 
@@ -111,6 +112,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
         should.equal(err, null);
         res.should.have.status(200);
         res.body.should.contain.keys(["status", "data", "message"]);
+        res.body.data.name.should.be.equal(pinName);
         res.body.status.should.be.equal("success");
         done();
       });
