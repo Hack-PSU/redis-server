@@ -3,12 +3,11 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 const app = require('../../src/server/app');
 const Scanner = require('../../src/server/models/scanner');
-let User = require('../../src/server/models/user');
 const should = chai.should();
 
 chai.use(chaiHttp);
 
-describe('api key test', () => {
+describe('INTEGRATION TEST: GET /auth/scanner/register', () => {
   it('it should get api key for scanner', (done) => {
     let body = {
       "pin": process.env.SCANNER_ADMIN_PIN
@@ -27,11 +26,12 @@ describe('api key test', () => {
       });
   });
 });
-describe('user auth test', () => {
+
+describe('INTEGRATION TEST: GET /auth/updatedb', () => {
   let agent = chai.request.agent(app);
-  before(function (done){
-    agent
-      .post('/auth/login')
+
+  it('it should get login and update redis db', (done) => {
+    agent.post('/auth/login')
       .send({ email: 'ad@min.com', password: process.env.ADMIN_PASS })
       .then(function (res) {
         //res.should.have.cookie('sessionid');
@@ -45,39 +45,18 @@ describe('user auth test', () => {
             done();
           });
       });
-
-  });
-
-  it('it should get api key for scanner', (done) => {
-    let body = {
-      "pin": process.env.SCANNER_ADMIN_PIN
-    };
-    chai.request(app)
-      .post('/auth/scanner/register')
-      .send(body)
-      .end((err, res) => {
-        should.equal(err, null);
-        res.should.have.status(200);
-        res.body.should.contain.keys(["status", "data", "message"]);
-        res.body.status.should.be.equal("success");
-        res.body.data.should.contain.keys(["apikey", "name"]);
-        //console.log(res.body);
-        done();
-      });
-  });
-  after(function() {
-    // runs after all tests in this block
   });
 });
 
 //TODO: figure out how to reset redis to disassociate scans (maybe an after tag that unassociates them
-describe('scanner proper flow test', () => {
+describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
   let apikey = "";
   //part of test data on redis
   let pin = 512;
   let wristbandID = "TEST_WID";
   let agent = chai.request.agent(app);
 
+  //Needed to remove all extraneous data from Mongo and Redis and reload with proper data before moving forward.
   before(function (done){
 
     Scanner.deleteMany({}, (err) => {
@@ -118,8 +97,8 @@ describe('scanner proper flow test', () => {
           });
       }
     });
-
   });
+
   it('it should get user info from pin', (done) => {
     let body = {
       "pin": pin,
