@@ -18,8 +18,7 @@ let port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 let server = null;
-//TODO: fix flag
-if(process.env.USE_HTTPS){
+if(process.env.USE_HTTPS.toLowerCase() === 'true'){
   /**
    * Create HTTPS server.
    */

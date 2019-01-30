@@ -41,7 +41,7 @@ let serverOptions = require('../../lib/remoteServer');
  *       "message": "Successfully completed task."
  *     }
  */
-//todo: move queues to redis
+//TODO: move queues to redis
 //TODO: Switch to maps
 let unsent_scans = [];
 let unsent_assignments = [];
