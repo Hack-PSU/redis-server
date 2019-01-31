@@ -52,12 +52,12 @@ let unsent_assignments = [];
 //all functions with "requireAuth" used to have helpers.ensureAuthenticated
 
 /**
- * @api {post} /rfid/assignment Register Wristband to User
- * @apiVersion 1.0.0
+ * @api {post} /rfid/assignment Register Wristband ID to User
+ * @apiVersion 1.5.0
  * @apiName Register WID
  * @apiGroup RFID
  * @apiDescription
- * Register Wristband to User. Sends assignment to main server, while locally replacing user key to wid code.
+ * Register Wristband to User. Sends assignment to main server, while locally replacing user key to WID code.
  * @apiPermission Scanner
  *
  * @apiParam {Number} wid  Wristband ID to set to user.
@@ -231,7 +231,7 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
 
 /**
  * @api {post} /rfid/getpin Get User with Pin
- * @apiVersion 1.0.0
+ * @apiVersion 1.5.0
  * @apiName GetPin
  * @apiGroup RFID
  * @apiDescription
@@ -306,7 +306,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
 //DOC: increment counter to tab of wid: https://redis.io/commands/hincrby
 /**
  * @api {post} /rfid/scan Add User Scan
- * @apiVersion 1.0.0
+ * @apiVersion 1.5.0
  * @apiName ScanData
  * @apiGroup RFID
  * @apiDescription
@@ -550,12 +550,12 @@ router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, nex
 
 /**
  * @api {post} /rfid/user-info Get User Info with WID tag
- * @apiVersion 1.0.0
- * @apiName GetRFID
+ * @apiVersion 1.5.0
+ * @apiName GetWID
  * @apiGroup RFID
  * @apiDescription
- * Get all user information from redis for an RFID tag if it has been assigned.
- * RFID is used to index user in redis after user has been setup.
+ * Get all user information from redis for an WID tag if it has been assigned.
+ * WID is used to index user in redis after user has been setup.
  * @apiPermission Scanner
  *
  * @apiParam {Number} wid      Wristband ID of user.
@@ -631,7 +631,7 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
 
 /**
  * @api {get} /rfid/active-locations Get all Active Locations
- * @apiVersion 1.0.0
+ * @apiVersion 1.5.0
  * @apiName GetActiveLocations
  * @apiGroup RFID
  * @apiPermission Scanner
