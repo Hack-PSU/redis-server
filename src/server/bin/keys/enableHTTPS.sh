@@ -15,7 +15,7 @@ openssl req -in server.csr -text -noout | grep -i "Signature.*SHA256" && echo "A
 rm server.csr
 
 #update .env flag to enable https
-sed -i "" 's/false/true/g' ../../../../.env
+sed -i "" 's/USE_HTTPS=false/USE_HTTPS=true/g' ../../../../.env
 
 echo "Enabled HTTPS!!"
 echo "Save this fingerprint for verifying Redis identity on Scanners:"
