@@ -171,7 +171,7 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
 
 /**
  * @api {post} /auth/scanner/register Register Scanner
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName RegisterScanner
  * @apiGroup Admin
  * @apiDescription
@@ -243,7 +243,7 @@ router.post('/scanner/register', function (req, res, next) {
 
 /**
  * @api {get} /auth/updatedb Update Redis DB
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName UpdateRedis
  * @apiGroup Admin
  * @apiDescription
@@ -345,7 +345,7 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
 //Readds everyone from server information. Recommend flushing DB before doing this.
 /**
  * @api {get} /auth/reloaddb Reload Redis DB
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName UpdateRedis
  * @apiGroup Admin
  * @apiDescription
@@ -473,7 +473,7 @@ router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
 
 /**
  * @api {get} /auth/resetcounter Reset Counter
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName ResetCounter
  * @apiGroup Admin
  * @apiDescription
@@ -586,7 +586,7 @@ router.get('/mobile/resetcounter', requireAuth, function (req, res, next) {
 
 /**
  * @api {get} /auth/removeall Empty Redis
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName EmptyRedis
  * @apiGroup Admin
  * @apiDescription
@@ -629,7 +629,7 @@ router.get('/removeall', helpers.ensureAdminJSON, function (req, res, next) {
 
 /**
  * @api {get} /auth/scanner/removeall Remove all Scanners
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName EmptyScanners
  * @apiGroup Admin
  * @apiDescription

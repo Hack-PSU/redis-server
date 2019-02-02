@@ -41,8 +41,7 @@ let serverOptions = require('../../lib/remoteServer');
  *       "message": "Successfully completed task."
  *     }
  */
-//TODO: move queues to redis
-//TODO: Switch to maps
+//TODONE: move queues to redis
 let unsent_scans = [];
 let unsent_assignments = [];
 
@@ -53,7 +52,7 @@ let unsent_assignments = [];
 
 /**
  * @api {post} /rfid/assignment Register Wristband ID to User
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName Register WID
  * @apiGroup RFID
  * @apiDescription
@@ -231,7 +230,7 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
 
 /**
  * @api {post} /rfid/getpin Get User with Pin
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName GetPin
  * @apiGroup RFID
  * @apiDescription
@@ -306,7 +305,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
 //DOC: increment counter to tab of wid: https://redis.io/commands/hincrby
 /**
  * @api {post} /rfid/scan Add User Scan
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName ScanData
  * @apiGroup RFID
  * @apiDescription
@@ -550,7 +549,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, nex
 
 /**
  * @api {post} /rfid/user-info Get User Info with WID tag
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName GetWID
  * @apiGroup RFID
  * @apiDescription
@@ -631,7 +630,7 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
 
 /**
  * @api {get} /rfid/active-locations Get all Active Locations
- * @apiVersion 1.5.0
+ * @apiVersion 2.0.0
  * @apiName GetActiveLocations
  * @apiGroup RFID
  * @apiPermission Scanner
