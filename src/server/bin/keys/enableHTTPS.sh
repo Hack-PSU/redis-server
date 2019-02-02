@@ -9,7 +9,12 @@ openssl req -new -sha256 -key key.pem -out server.csr
 openssl req -x509 -sha256 -days 365 -key key.pem -in server.csr -out cert.pem
 
 # validate the certificate
-openssl req -in server.csr -text -noout | grep -i "Signature.*SHA256" && echo "All is well" || echo "This certificate doesn't work in 2017! You must update OpenSSL to generate a widely-compatible certificate"
+openssl req -in server.csr -text -noout | grep -i "Signature.*SHA256" 
+if [[ $? ]]; then
+echo "This certificate doesn't work in 2017! You must update OpenSSL to generate a widely-compatible certificate"
+else
+echo "All is well"
+fi
 
 # remove certain files
 rm server.csr
