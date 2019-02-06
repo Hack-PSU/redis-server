@@ -2,8 +2,7 @@
  * Created by PranavJain on 2/20/17.
  */
 let express = require('express');
-let router = express.Router();
-
+let router = express.Router({});
 let passport = require('../../lib/auth');
 let helpers = require('../../lib/helpers');
 let redis = require('../../lib/redis').redis;
@@ -42,8 +41,7 @@ let serverOptions = require('../../lib/remoteServer');
  *       "message": "Successfully completed task."
  *     }
  */
-//todo: move queues to redis
-//TODO: Switch to maps
+//TODONE: move queues to redis
 let unsent_scans = [];
 let unsent_assignments = [];
 
@@ -52,38 +50,21 @@ let unsent_assignments = [];
 //authorization functions
 //all functions with "requireAuth" used to have helpers.ensureAuthenticated
 
-
-//DOC: scan rfid and setup info
-//rename Tab localhost:3000/tabs/setup/ with rfid tag
-//btw we know pin exists
-/* REQUEST
-{
-    id: <<RFID CODE>>,
-    pin: <<base 10 pin>>
-}
- */
-/* RESPONSE
-{
-    status: 'success',
-    data: "OK",
-    message: 'Created tab.'
-}
- */
 /**
- * @api {post} /tabs/setup Register RFID Band to User
- * @apiVersion 1.0.0
- * @apiName Register RFID
+ * @api {post} /rfid/assignment Register Wristband ID to User
+ * @apiVersion 2.0.0
+ * @apiName Register WID
  * @apiGroup RFID
  * @apiDescription
- * Register RFID Band to User. Sends assignment to main server, while locally replacing user key to RFID code.
+ * Register Wristband to User. Sends assignment to main server, while locally replacing user key to WID code.
  * @apiPermission Scanner
  *
- * @apiParam {Number} id  RFID code to set to user.
- * @apiParam {Number} pin Pin of user to add rfid code to.
+ * @apiParam {Number} wid  Wristband ID to set to user.
+ * @apiParam {Number} pin Pin of user to add wid code to.
  * @apiParam {String} apikey API key for scanner to authenticate.
  * @apiParamExample {json} Request Body Example
  *     {
- *       id: "RFID1",
+ *       wid: "RFID1",
  *       pin: 94,
  *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
  *     }
@@ -101,7 +82,7 @@ let unsent_assignments = [];
  *    }
  * @apiErrorExample {json} 401 Response
  *     HTTP/1.1 401 Unauthorized
- *     "Invalid values passed for rfid or pin"
+ *     "Invalid values passed for wristband id or pin"
  * @apiErrorExample {json} 404 Response
  *     HTTP/1.1 404 Not Found
  *     {
@@ -114,15 +95,15 @@ let unsent_assignments = [];
  *     {
  *       status: 'error',
  *       data: {'Existing User data...'},
- *       message: 'RFID Tag already opened.'
+ *       message: 'Wristband Tag already opened.'
  *     }
  */
-router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, next) {
-  if(!req.body.id || !req.body.pin){
-    console.error("Invalid values passed for rfid or pin");
-    return res.status(401).send(new Error("Invalid values passed for rfid or pin"));
+router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, res, next) {
+  if(!req.body || !req.body.wid || !req.body.pin){
+    console.error("Invalid values passed for wristband id or pin");
+    return res.status(401).send(new Error("Invalid values passed for wid or pin"));
   }
-  let userRFID = req.body.id;
+  let userRFID = req.body.wid;
   //we know pin exists
   let pin = parseInt(req.body.pin, 10);
 
@@ -143,13 +124,13 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
           message: 'Something went wrong'
         });
     } else {
-        console.log(obj);
+      console.log(obj);
       if (obj) {
         return res.status(409)
           .json({
             status: 'error',
             data: obj,
-            message: 'RFID Tag already opened.'
+            message: 'Wristband Tag already opened.'
           });
       } else {
         redis.rename(pin, userRFID, function (err, reply) {
@@ -162,14 +143,14 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
               message: "Invalid pin"
             });
           } else {
-            console.log("Successfully set rfid to tab!");
+            console.log("Successfully set wid to tab!");
             res.status(200)
               .json({
                 status: 'success',
                 data: reply,
                 message: 'Created tab.'
               });
-            //send rfid change to server asynchronously
+            //send wid change to server asynchronously
             //get user
             redis.hgetall(userRFID, function (err, obj) {
               if (err) {
@@ -180,7 +161,8 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
                 //prep request to send asynch
                 let options = helpers.clone(serverOptions);
                 options.method = 'POST';
-                options.uri = options.uri + '/v1/scanner/assignment';
+                options.uri = options.uri + '/scanner/assignment';
+                //TODO: Normalize with other sent scans... talk to sush
                 let scan = {
                   "rfid": userRFID,
                   "uid": obj.uid,
@@ -197,10 +179,10 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
                   207 if partial failure
                     - ones that succeeded will have the original scan
                     - ones that failed, it will contain an error with a status code
-                    (409 = DUPLICATE or invalid relation) (500 for other issues)
+                    (409 = DUPLICATE or invalid relation) (500 for Server Error)
                   400 if formatting of sent info is bad
                   409 if Duplicate
-                  500 if everything failed
+                  500 Server Error
                  */
                 request(options).then(function (response) {
                   console.dir("SUCCESS: " + JSON.stringify(response));
@@ -210,7 +192,6 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
                       if(item instanceof Error){
                         if(item.status >= 500){
                           //bad response from server, retry scan
-
                           newUnsent_assign.push(item.body.scan);
                         }else if(item.status >= 400){
                           //bad request, drop from list
@@ -248,13 +229,13 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
 
 
 /**
- * @api {post} /tabs/getpin Get User with Pin
- * @apiVersion 1.0.0
+ * @api {post} /rfid/getpin Get User with Pin
+ * @apiVersion 2.0.0
  * @apiName GetPin
  * @apiGroup RFID
  * @apiDescription
- * Get all user information from redis that hasn't been assigned an rfid tag.
- * Pin is used to currently index user in redis if rfid hasn't been set.
+ * Get all user information from redis that hasn't been assigned an WID tag.
+ * Pin is used to currently index user in redis if WID hasn't been set.
  * @apiPermission Scanner
  *
  * @apiParam {Number} pin Pin of user.
@@ -279,7 +260,7 @@ router.post('/setup', helpers.ensureScannerAuthenticated, function (req, res, ne
  *     }
  */
 router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, next) {
-  if(!req.body.pin){
+  if(!req.body || !req.body.pin){
     console.error("Invalid values passed for pin");
     return res.status(401).send(new Error("Invalid values passed for pin"));
   }
@@ -321,46 +302,23 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
 });
 
 
-//DOC: increment counter to tab of rfid: https://redis.io/commands/hincrby
-//Does food count and regular workshops
-/* REQUEST
-{
-    location: <<Identifier for which physical location the scanner is in>>,
-    id: <<RFID TAG>>
-}
- */
-/*RESPONSE
-{
-    status: 'success',
-    data: {
-        "uid": element.uid,
-        "pin": element.pin || "NULL",
-        "name": element.firstname + ' ' + element.lastname,
-        "shirtSize": element.shirt_size,
-        "diet": element.dietary_restriction || "NULL",
-        "counter": 0,
-        "numScans": 0,
-        "isRepeat": false/true
-    },
-    message: 'Incremented Tab.'
-}
-*/
+//DOC: increment counter to tab of wid: https://redis.io/commands/hincrby
 /**
- * @api {post} /tabs/add Add User Scan
- * @apiVersion 1.0.0
+ * @api {post} /rfid/scan Add User Scan
+ * @apiVersion 2.0.0
  * @apiName ScanData
  * @apiGroup RFID
  * @apiDescription
- * Store and log scan location, rfid tag and timestamp. Verify if user is allowed to enter, and send response back.
+ * Store and log scan location, wid tag and timestamp. Verify if user is allowed to enter, and send response back.
  * Redis will also send the scan data to the main server asynchronously. Scanners will not find out if those requests will succeed or fail.
  * @apiPermission Scanner
  *
- * @apiParam {Number} id        RFID code of user.
+ * @apiParam {Number} wid        Wristband ID of user.
  * @apiParam {Number} location  Location id that scan occurred at. (Set id's in admin app)
  * @apiParam {String} apikey    API key for scanner to authenticate.
  * @apiParamExample {json} Request Body Example
  *     {
- *       id: 1695694065,
+ *       wid: 1695694065,
  *       location: 3,
  *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
  *     }
@@ -408,24 +366,18 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
  *    {
  *      status: 'error',
  *      data: {...},
- *      message: 'Couldn\'t find rfid'
+ *      message: 'Couldn\'t find wid'
  *    }
  *
  */
-router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next) {
-  //let store = new Store({
-  //    'name': req.body.name,
-  //    'description': req.body.description,
-  //});
-  if(!req.body.location || !req.body.id){
+router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, next) {
+  if(!req.body || !req.body.location || !req.body.wid){
     console.error("Invalid values passed for location or id");
     return res.status(401).send(new Error("Invalid values passed for location or id"));
   }
 
   let location = req.body.location;
-  let userRFID = req.body.id;
-
-  //console.log("Scanned RFID: " + userRFID + "\n with pi ID: " + location);
+  let userRFID = req.body.wid;
 
   //setup sending to server asynchronously
   let scan = {
@@ -433,16 +385,17 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
     "scan_location": location.toString(),
     "scan_time": Date.now()
   };
-    let options = helpers.clone(serverOptions);
-    let uri = options.uri;
-    options.uri = uri + '/v1/scanner/scans';
-    options.method = 'POST';
+  let options = helpers.clone(serverOptions);
+  let uri = options.uri;
+  options.uri = uri + '/scanner/scans';
+  options.method = 'POST';
+
   if(!redisIsConnected()){
-      return res.status(500)
-          .json({
-              status: 'error',
-              message: 'Redis database is down'
-          });
+    return res.status(500)
+      .json({
+        status: 'error',
+        message: 'Redis database is down'
+      });
   }
   //They haven't registered and it'll still go through but make a seperate location for this.
   //need to throw an error that doesn't exist
@@ -450,9 +403,13 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
   //add to redis
   redis.exists(userRFID, function (err, val) {
     if (err) {
-
+      return res.status(500)
+        .json({
+          status: 'error',
+          message: 'Checking existence failed.'
+        });
     } else {
-      if (val == 0) {
+      if (val === 0) {
         res.status(404)
           .json({
             status: 'error',
@@ -460,169 +417,22 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
             message: 'Does not exist.'
           });
       } else {
-        if (location == process.env.FOOD) {
-          redis.HINCRBY(userRFID, "counter", 1, function (err, obj) {
-            if (err) {
-              res.status(500)
-                .json({
-                  status: 'error',
-                  message: 'Something went wrong'
-                });
-            } else {
-
-              //actually send to server now that we know it exists
-              //todo:worry about promises and mutli data usage
-                unsent_scans.push(scan);
-                options.body = {
-                    scans: unsent_scans
-                };
-                console.log("UNSENT SCANS: " + JSON.stringify(options.body));
-              /*
-                200 if everything is success
-                207 if partial failure
-                  - ones that succeeded will have the original scan
-                  - ones that failed, it will contain an error with a status code
-                  (409 = DUPLICATE or invalid relation) (500 for other issues)
-                400 if formatting of sent info is bad
-                409 if Duplicate
-                500 if everything failed
-               */
-              request(options).then(function (response) {
-                console.dir("SUCCESS: " + JSON.stringify(response));
-                let newUnsent_scans = [];
-                if(response.statusCode === 207){
-                  response.forEach(function (item) {
-                    if(item instanceof Error){
-                      if(item.status >= 500){
-                        //bad response from server, retry scan
-
-                        newUnsent_scans.push(item.body.scan);
-                      }else if(item.status >= 400){
-                        //bad request, drop from list
-                        console.error(item.body.message);
-                      }
-                    }
-                  });
-                }
-                unsent_scans = newUnsent_scans;
-
-              }).catch(function (err) {
-                // Something bad happened, handle the error 400 and 500 errors
-                console.log(err.message);
-                //TODO: if duplicate entry, delete that entry otherwise everything will always fail.
-                //don't delete unsent_assignments...
-                if(err.statusCode >= 500){
-                  //bad response from server, retry scan
-                }else{
-                  //bad request, drop from list
-                  unsent_scans = [];
-                }
+        //wid exists
+        let incrementedKey = "numScans";
+        if (location === process.env.FOOD) {
+          incrementedKey = "counter";
+        }
+        redis.HINCRBY(userRFID, incrementedKey, 1, function (err, obj) {
+          if (err) {
+            res.status(500)
+              .json({
+                status: 'error',
+                message: 'Something went wrong'
               });
-
-              console.log("Incrementing FOOD counter");
-              if (obj) {
-                redis.hgetall(userRFID, function (err, user) {
-                  if (err) {
-                    res.status(500)
-                      .json({
-                        status: 'error',
-                        message: 'Something went wrong'
-                      });
-                  } else {
-                      let retVal = {
-                          uid: user.uid,
-                          pin: user.pin,
-                          name: user.name,
-                          shirtSize: user.shirtSize,
-                          diet: user.diet,
-                          counter: user.counter,
-                          numScans: user.numScans,
-                          isRepeat: false
-                      };
-                    if (retVal.counter > 1) {
-                        retVal.isRepeat = true;
-                    }
-                    console.dir(retVal);
-                    res.status(200)
-                      .json({
-                        status: 'success',
-                        data: retVal,
-                        message: 'Incremented Tab.'
-                      });
-                  }
-
-                });
-              } else {
-                res.status(417)
-                  .json({
-                    status: 'error',
-                    data: obj,
-                    message: 'Couldn\'t find rfid'
-                  });
-              }
-            }
-          });
-        } else {
-          redis.HINCRBY(userRFID, "numScans", 1, function (err, obj) {
-            if (err) {
-              res.status(500)
-                .json({
-                  status: 'error',
-                  message: 'Something went wrong'
-                });
-            } else {
-              //actually send to server now that we know it exists
-                unsent_scans.push(scan);
-                options.body = {
-                    scans: unsent_scans
-                };
-                console.log("UNSENT SCANS: " + JSON.stringify(options.body));
-              //todo:worry about promises and mutli data usage
-              /*
-                200 if everything is success
-                207 if partial failure
-                  - ones that succeeded will have the original scan
-                  - ones that failed, it will contain an error with a status code
-                  (409 = DUPLICATE or invalid relation) (500 for other issues)
-                400 if formatting of sent info is bad
-                409 if Duplicate
-                500 if everything failed
-               */
-              request(options).then(function (response) {
-                console.dir("SUCCESS: " + JSON.stringify(response));
-                let newUnsent_scans = [];
-                if(response.statusCode === 207){
-                  response.forEach(function (item) {
-                    if(item instanceof Error){
-                      if(item.status >= 500){
-                        //bad response from server, retry scan
-
-                        newUnsent_scans.push(item.body.scan);
-                      }else if(item.status >= 400){
-                        //bad request, drop from list
-                        console.error(item.body.message);
-                      }
-                    }
-                  });
-                }
-                unsent_scans = newUnsent_scans;
-
-              }).catch(function (err) {
-                // Something bad happened, handle the error 400 and 500 errors
-                console.log(err.message);
-                //TODO: if duplicate entry, delete that entry otherwise everything will always fail.
-                //don't delete unsent_assignments...
-                if(err.statusCode >= 500){
-                  //bad response from server, retry scan
-                }else{
-                  //bad request, drop from list
-                  unsent_scans = [];
-                }
-              });
-
-              console.log("Incrementing numScans counter");
-              if (obj) {
-
+          } else {
+            console.log("Incrementing "+incrementedKey+" counter");
+            if (obj) {
+              if (incrementedKey === "numScans"){
                 let numScans = parseInt(obj.toString()) - 1;
                 let scanLocKey = "Scan." + numScans + ".location";
                 let scanTimeKey = "Scan." + numScans + ".time";
@@ -633,51 +443,102 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
                 redis.hmset(userRFID, data, function (err, reply) {
                   // reply is null when the key is missing
                   if (err) {
-                    return next(err);
+                    console.error("Failed to add scan to redis");
                   } else {
-                    console.log("Successfully added to tab!");
-                    redis.hgetall(userRFID, function (err, user) {
-                      if (user) {
-                          let retVal = {
-                              uid: user.uid,
-                              pin: user.pin,
-                              name: user.name,
-                              shirtSize: user.shirtSize,
-                              diet: user.diet,
-                              counter: user.counter,
-                              numScans: user.numScans,
-                              isRepeat: false
-                          };
-                          console.dir(retVal);
-                        res.status(200)
-                          .json({
-                            status: 'success',
-                            data: retVal,
-                            message: 'Incremented Tab.'
-                          });
-                      } else {
-                        res.status(200)
-                          .json({
-                            status: 'success',
-                            data: reply,
-                            message: 'Incremented Tab.'
-                          });
-                      }
-                    });
-
+                    console.log("Added scan to redis");
                   }
                 });
-
-              } else {
-                res.status(500)
-                  .json({
-                    status: 'error',
-                    message: 'Something went wrong'
-                  });
               }
+              //return value
+              console.log("Successfully added to tab!");
+              redis.hgetall(userRFID, function (err, user) {
+                if (err) {
+                  res.status(500)
+                    .json({
+                      status: 'error',
+                      message: 'Something went wrong'
+                    });
+                } else {
+                  let retVal = {
+                    uid: user.uid,
+                    pin: user.pin,
+                    name: user.name,
+                    shirtSize: user.shirtSize,
+                    diet: user.diet,
+                    counter: user.counter,
+                    numScans: user.numScans,
+                    isRepeat: false
+                  };
+                  if (incrementedKey === "counter" && retVal.counter > 1) {
+                    retVal.isRepeat = true;
+                  }
+                  console.dir(retVal);
+                  res.status(200)
+                    .json({
+                      status: 'success',
+                      data: retVal,
+                      message: 'Incremented Tab.'
+                    });
+                }
+              });
+
+            } else {
+              res.status(417)
+                .json({
+                  status: 'error',
+                  data: obj,
+                  message: 'Couldn\'t find wid'
+                });
             }
-          });
-        }
+            //actually send to server now that we know it exists
+            unsent_scans.push(scan);
+            options.body = {
+              scans: unsent_scans
+            };
+            console.log("UNSENT SCANS: " + JSON.stringify(options.body));
+            //todo:worry about promises and mutli data usage
+            /*
+              200 if everything is success
+              207 if partial failure
+                - ones that succeeded will have the original scan
+                - ones that failed, it will contain an error with a status code
+                (409 = DUPLICATE or invalid relation) (500 for server error)
+              400 if formatting of sent info is bad
+              409 if Duplicate or invalid relation
+              500 if Server Error
+             */
+            request(options).then(function (response) {
+              console.dir("SUCCESS: " + JSON.stringify(response));
+              let newUnsent_scans = [];
+              if(response.statusCode === 207){
+                response.forEach(function (item) {
+                  if(item instanceof Error){
+                    if(item.status >= 500){
+                      //bad response from server, retry scan
+                      newUnsent_scans.push(item.body.scan);
+                    }else if(item.status >= 400){
+                      //bad request, drop from list
+                      console.error(item.body.message);
+                    }
+                  }
+                });
+              }
+              unsent_scans = newUnsent_scans;
+
+            }).catch(function (err) {
+              // Something bad happened, handle the error 400 and 500 errors
+              console.log(err.message);
+              //TODO: if duplicate entry, delete that entry otherwise everything will always fail.
+              //don't delete unsent_assignments...
+              if(err.statusCode >= 500){
+                //bad response from server, retry scan
+              }else{
+                //bad request, drop from list
+                unsent_scans = [];
+              }
+            });
+          }
+        });
       }
     }
   });
@@ -685,43 +546,22 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
 
 });
 
-//DOC: Get user information from RFID tag
-/* REQUEST
-{
-    id: <<RFID CODE>>
-}
- */
-/* RESPONSE
-{
-    status: 'success',
-    data: {
-        "uid": element.uid,
-        "pin": element.pin || "NULL",
-        "name": element.firstname + ' ' + element.lastname,
-        "shirtSize": element.shirt_size,
-        "diet": element.dietary_restriction || "NULL",
-        "counter": 0,
-        "numScans": 0
-    },
-    message: 'Retrieved tab.'
-}
- */
 
 /**
- * @api {post} /tabs/getpin Get User with RFID tag
- * @apiVersion 1.0.0
- * @apiName GetRFID
+ * @api {post} /rfid/user-info Get User Info with WID tag
+ * @apiVersion 2.0.0
+ * @apiName GetWID
  * @apiGroup RFID
  * @apiDescription
- * Get all user information from redis for an RFID tag if it has been assigned.
- * RFID is used to index user in redis after user has been setup.
+ * Get all user information from redis for an WID tag if it has been assigned.
+ * WID is used to index user in redis after user has been setup.
  * @apiPermission Scanner
  *
- * @apiParam {Number} id      RFID code of user.
+ * @apiParam {Number} wid      Wristband ID of user.
  * @apiParam {String} apikey  API key for scanner to authenticate.
  * @apiParamExample {json} Request Body Example
  *     {
- *       id: 1695694065,
+ *       wid: 1695694065,
  *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
  *     }
  *
@@ -729,7 +569,7 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
  *
  * @apiErrorExample {json} 401 Response
  *     HTTP/1.1 401 Unauthorized
- *     "Invalid values passed for rfid"
+ *     "Invalid values passed for wristband id."
  * @apiErrorExample {json} 404 Response
  *     HTTP/1.1 404 Not Found
  *     {
@@ -745,11 +585,11 @@ router.post('/add', helpers.ensureScannerAuthenticated, function (req, res, next
  *     }
  */
 router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res, next) {
-  if(!req.query.id){
-    console.error("Invalid values passed for rfid");
-    return res.status(401).send(new Error("Invalid values passed for rfid"));
+  if(!req.query || !req.query.wid){
+    console.error("Invalid values passed for wristband id.");
+    return res.status(401).send(new Error("Invalid values passed for wristband id."));
   }
-  let userRFID = req.query.id;
+  let userRFID = req.query.wid;
   if(!redisIsConnected()){
       return res.status(500)
           .json({
@@ -789,8 +629,8 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
 });
 
 /**
- * @api {get} /tabs/active-locations Get all Active Locations
- * @apiVersion 1.0.0
+ * @api {get} /rfid/active-locations Get all Active Locations
+ * @apiVersion 2.0.0
  * @apiName GetActiveLocations
  * @apiGroup RFID
  * @apiPermission Scanner
@@ -836,7 +676,7 @@ router.get('/active-locations', function (req, res, next) {
 
   let options = helpers.clone(serverOptions);
   let uri = options.uri;
-  options.uri = uri + '/v1/scanner/location';
+  options.uri = uri + '/scanner/location';
   request(options).then(function (response) {
     //empty list of unsent scans
     console.dir("SUCCESS: " + JSON.stringify(response));
@@ -860,25 +700,6 @@ router.get('/active-locations', function (req, res, next) {
 
 });
 
-
-let cursor = '0';
-
-function scan(pattern, keys, callback) {
-
-  redis.scan(cursor, 'MATCH', pattern, 'COUNT', '1000', function (err, reply) {
-    if (err) {
-      throw err;
-    }
-    cursor = reply[0];
-    keys.push.apply(keys, reply[1]);
-    if (cursor === '0') {
-      return callback(keys);
-    } else {
-
-      return scan(pattern, keys, callback);
-    }
-  });
-}
 
 
 module.exports = router;

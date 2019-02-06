@@ -20,7 +20,7 @@ let redis = require('./lib/redis').redis;
 let config = require('../_config');
 
 // *** seed the database *** //
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV) {
   let seedAdmin = require('./models/seeds/admin.js');
   seedAdmin();
 }
@@ -29,7 +29,7 @@ if (process.env.NODE_ENV === 'development') {
 // *** routes *** //
 let mainRoutes = require('./routes/index');
 let authRoutes = require('./routes/auth');
-let tabRoutes = require('./routes/api/tab');
+let rfidRoutes = require('./routes/api/rfid');
 let scannerAPIRoutes = require('./routes/api/scanner');
 
 // *** express instance *** //
@@ -80,9 +80,9 @@ mongoose.connect(app.get('dbUrl'), {useNewUrlParser: true});
 
 // *** main routes *** //
 app.use('/', mainRoutes);
-app.use('/auth', authRoutes);
-app.use('/tabs/', tabRoutes);
-app.use('/api/v1/', scannerAPIRoutes);
+app.use('/auth/', authRoutes);
+app.use('/rfid/', rfidRoutes);
+app.use('/api/', scannerAPIRoutes);
 
 // *** error handlers *** //
 

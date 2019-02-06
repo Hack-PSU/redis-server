@@ -10,7 +10,7 @@ $(document).ready(function() {
         var payload = {name: $('#product-name').val(), amount:$('#product-price').val()};
         $.ajax({
             type: 'POST',
-            url: '/api/v1/scanners',
+            url: '/api/scanners',
             data: payload
         })
             .done(function(data) {
@@ -29,7 +29,7 @@ $(document).ready(function() {
         var payload = {};
         var index = this.id;
         index = index.substring(19);
-        var url = '/api/v1/scanners/' + index;
+        var url = '/api/scanners/' + index;
         $.ajax({
             type: 'DELETE',
             url: url,
