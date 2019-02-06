@@ -268,7 +268,7 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
   }
   let options = helpers.clone(serverOptions);
   let uri = options.uri;
-  options.uri = uri + '/v1/scanner/registrations';
+  options.uri = uri + '/scanner/registrations';
   request(options)
     .then(function (response) {
       // Request was successful, use the response object at will
@@ -371,7 +371,7 @@ router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
   }
   let options = helpers.clone(serverOptions);
   let uri = options.uri;
-  options.uri = uri + '/v1/scanner/registrations';
+  options.uri = uri + '/scanner/registrations';
   request(options)
     .then(function (response) {
       // Request was successful, use the response object at will

@@ -161,7 +161,7 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
                 //prep request to send asynch
                 let options = helpers.clone(serverOptions);
                 options.method = 'POST';
-                options.uri = options.uri + '/v1/scanner/assignment';
+                options.uri = options.uri + '/scanner/assignment';
                 //TODO: Normalize with other sent scans... talk to sush
                 let scan = {
                   "rfid": userRFID,
@@ -387,7 +387,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, nex
   };
   let options = helpers.clone(serverOptions);
   let uri = options.uri;
-  options.uri = uri + '/v1/scanner/scans';
+  options.uri = uri + '/scanner/scans';
   options.method = 'POST';
 
   if(!redisIsConnected()){
@@ -676,7 +676,7 @@ router.get('/active-locations', function (req, res, next) {
 
   let options = helpers.clone(serverOptions);
   let uri = options.uri;
-  options.uri = uri + '/v1/scanner/location';
+  options.uri = uri + '/scanner/location';
   request(options).then(function (response) {
     //empty list of unsent scans
     console.dir("SUCCESS: " + JSON.stringify(response));
