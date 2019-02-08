@@ -101,7 +101,9 @@ let unsent_assignments = [];
 router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body || !req.body.wid || !req.body.pin){
     console.error("Invalid values passed for wristband id or pin");
-    return res.status(401).send(new Error("Invalid values passed for wid or pin"));
+    let err = new Error("Invalid values passed for wid or pin");
+    err.status = 401;
+    return next(err);
   }
   let userRFID = req.body.wid;
   //we know pin exists
@@ -262,24 +264,22 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
 router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body || !req.body.pin){
     console.error("Invalid values passed for pin");
-    return res.status(401).send(new Error("Invalid values passed for pin"));
+    let err = new Error("Invalid values passed for pin");
+    err.status = 401;
+    return next(err);
   }
   let pin = parseInt(req.body.pin, 10);
   console.log("PIN IS: " + pin);
     if(!redisIsConnected()){
-        return res.status(500)
-            .json({
-                status: 'error',
-                message: 'Redis database is down'
-            });
+      let err = new Error("Redis database is down");
+      err.status = 500;
+      return next(err);
     }
   redis.hgetall(pin, function (err, obj) {
     if (err) {
-      res.status(404)
-        .json({
-          status: 'error',
-          message: 'Does not exist or already set.'
-        });
+      let err = new Error("Does not exist or already set.");
+      err.status = 404;
+      return next(err);
     } else {
       console.dir(obj);
       if (obj) {
@@ -296,6 +296,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
             data: obj,
             message: 'Did not find anything.'
           });
+
       }
     }
   });
@@ -373,7 +374,9 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
 router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body || !req.body.location || !req.body.wid){
     console.error("Invalid values passed for location or id");
-    return res.status(401).send(new Error("Invalid values passed for location or id"));
+    let err = new Error("Invalid values passed for location or wid");
+    err.status = 401;
+    return next(err);
   }
 
   let location = req.body.location;
@@ -587,7 +590,9 @@ router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, nex
 router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.query || !req.query.wid){
     console.error("Invalid values passed for wristband id.");
-    return res.status(401).send(new Error("Invalid values passed for wristband id."));
+    let err = new Error("Invalid values passed for wristband id.");
+    err.status = 401;
+    return next(err);
   }
   let userRFID = req.query.wid;
   if(!redisIsConnected()){
