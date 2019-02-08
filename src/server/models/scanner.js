@@ -11,8 +11,13 @@ var Scanner = new Schema({
   },
   pin: {
     type: Number,
-    required: true
+    required: true,
+    unique: true
   }, //TODO: make a flag to see if api key has been assigned or not
+  initTime: {
+    type: Date,
+    default: Date.now
+  },
   name: {
     type: String,
     default: 'New-Scanner'

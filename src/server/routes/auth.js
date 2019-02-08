@@ -11,6 +11,7 @@ let passport = require('../lib/auth');
 let helpers = require('../lib/helpers');
 let User = require('../models/user');
 let Scanner = require('../models/scanner');
+const asyncMiddleware = require('../lib/asyncMiddleware');
 
 // Middleware to require login/auth
 const requireAuth = passport.authenticate('user-mobile', {session: false});
@@ -171,7 +172,7 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
 
 /**
  * @api {post} /auth/scanner/register Register Scanner
- * @apiVersion 2.0.0
+ * @apiVersion 2.0.1
  * @apiName RegisterScanner
  * @apiGroup Admin
  * @apiDescription
@@ -182,14 +183,16 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
  * @apiParam {String} pin Pin to use to prove that valid scanner is connecting to Redis. (Set valid pin in .env file)
  * @apiParamExample {json} Request Body Example
  *     {
- *       pin: "MASTER_KEY"
+ *       "pin": 1234
  *     }
  *
  * @apiSuccess {String} status          Status of response.
  * @apiSuccess {Object} data            User tab information.
  * @apiSuccess {String} data.name       Auto-Generated Name for Scanner
  * @apiSuccess {String} data._id        Scanner's universal ID
+ * @apiSuccess {String} data.initTime   Date and Time that the Key was generated
  * @apiSuccess {String} data.apikey     The API key that the scanner can now use
+ * @apiSuccess {String} data.pin        The pin that the scanner needs to use to get API key
  * @apiSuccess {String} message         Response Message.
  *
  * @apiSuccessExample {json} Success-Response:
@@ -197,15 +200,23 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
  *     {
  *       status: "success",
  *       data: {
- *         name: "2018-10-01T00:57:23.370Z",
+ *         name: "2019-02-08T20:57:55.047Z",
  *         _id: "5bb170f354fd0f590ddf4103",
- *         apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *         initTime: "2019-02-08T20:57:55.046Z",
+ *         apikey: "0f865521-2c05-467d-ad43-a9bac2108db9",
+ *         pin: 3971
  *       },
  *       message: "Scanner Added. API Key Generated."
  *     }
  * @apiErrorExample {json} 401 Response
  *     HTTP/1.1 401 Unauthorized
- *     "Invalid pin passed"
+ *     {
+ *        "status": "error",
+ *        "message": "Invalid or expired pin passed.",
+ *        "error": {
+ *            "status": 401
+ *        }
+ *     }
  * @apiErrorExample {json} 500 Response
  *     HTTP/1.1 500 Server Error
  *     {
@@ -214,32 +225,36 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
  *       message: "There was an error."
  *     }
  */
-router.post('/scanner/register', function (req, res, next) {
-  if (!req.body.pin || req.body.pin !== process.env.SCANNER_ADMIN_PIN) {
+router.post('/scanner/register', asyncMiddleware(async function (req, res, next) {
+  if (!req.body.pin) {
     console.error("Invalid pin passed");
-    return res.status(401).send(new Error("Invalid pin passed"));
+    let err = new Error("Invalid pin passed");
+    err.status = 401;
+    return next(err);
   }
-  let pin = req.body.pin;
-  let newScanner = new Scanner();
-  newScanner.apikey = uuidv4();
-  newScanner.name = (new Date()).toISOString();
-  newScanner.save(function (err, results) {
-    if (err) {
-      console.log(err);
-      res.status(500).json({
-        status: "error",
-        data: err,
-        message: "There was an error."
-      });
-    } else {
-      res.status(200).json({
-        status: "success",
-        data: results,
-        message: "Scanner Added. API Key Generated."
-      });
-    }
+  let scanner = await Scanner.findOne({pin: req.body.pin}).exec();
+  let elapsedTime = Date.now() - scanner.initTime;
+  console.log(typeof elapsedTime);
+  console.log(elapsedTime);
+  if (!scanner || (elapsedTime)/1000 > 300){
+    console.error("Invalid or expired pin passed.");
+    //return res.status(401).send(new Error("Invalid or expired pin passed."));
+    let err = new Error("Invalid or expired pin passed.");
+    err.status = 401;
+    return next(err);
+    //remove existing scanner out
+  }
+  console.log("Made it here!!!");
+  //scanner.save();
+  res.status(200).json({
+    status: "success",
+    data: scanner,
+    message: "Scanner Added. API Key Generated."
   });
-});
+  return next();
+
+
+}));
 
 /**
  * @api {get} /auth/updatedb Update Redis DB
