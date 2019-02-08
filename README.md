@@ -15,7 +15,9 @@ The back-end API includes:
 ### Using Docker
 1. Clone and install dependencies
 1. Update the config:
-  - Rename the *.env_sample* file to *.env* and update
+  - Rename the `.env_sample` file to `.env` and update *change_me* to your custom keys
+    - This is where all our environment variables and passwords go.
+    - To learn more check out the section on [.env](#environment-variables) files and how it's used.
 1. Run the app - `docker-compose up -d --build`
 
 #### Some useful docker commands:
@@ -75,8 +77,9 @@ docker-compose down
     npm install
     ```
 1. Update the config:
-    - Rename the *.env_sample* file to *.env* and update all the *change_me* 
-    values to values that you would like to use.
+     - Rename the `.env_sample` file to `.env` and update *change_me* to your custom keys
+       - This is where all our environment variables and passwords go.
+       - To learn more check out the section on [.env](#environment-variables) files and how it's used.
 1. Run the app - `npm start`
 1. Go to `http://localhost:3000` to see running website.
 
@@ -86,6 +89,28 @@ docker-compose down
 
 1. View the [HTTPS.md](src/server/bin/keys/HTTPS.md) file to learn more.
 
+## Environment Variables
+The function of environment variables is to make sure that you don't have important passwords and keys in your code.
+Doing this is good practice, so we use a `.env` file to help us load those variables at runtime. To help you get started,
+we made a `.env_sample` file that you can rename to `.env`. 
+
+Here are the variables that we currently use in our codebase:
+
+| Variable  | Purpose/Explanation | Possible Values |
+| --------- | ------------------- | --------------- |
+| SECRET_KEY  | Random string used to sign the session ID cookie. This should be as unidentifiable as possible. | String |
+| NODE_ENV | The current use case of the whole application. Change this value when you're testing this or developing this instead of running this in full production.  | test/development/stage |
+| SECRET | Used to sign JWT (JSON Web Tokens) tokens for authentication. Make this as random as possible. | String |
+| PORT | The port that this application will run on. | Number *(i.e: 80, 443, 3000, 8080)* |
+| SERVER_HOSTNAME | Redis server acts as a cache for your main API server handling your data. This is the variable that contains the URL of the server you ultimately hope to get and send your requests to. | URL *(i.e: https://api.hackpsu.org)*|
+| SERVER_PORT | The port your main API server is running on. Sometimes when you run the API directly on your computer this port may change from 443 to 5000. This gives you the opportunity to handle that. | Number *(i.e: 80, 443, 3000, 8080) |
+| SERVER_VERSION | This variable details the version of code your main API server is running. Your main API server could be running multiple versions, each hosted on the same hostname but a different route (i.e */v1/* vs */v2/*). | Route *(i.e: v1, v2, v3, ...)* |
+| SERVER_API_KEY | This is the API_KEY that you'll use to authenticate yourself to your main API server. | String |
+| FOOD | This is the number that represents the location ID for food events so we can understand if people have been trying to get a second serving before others have gotten a first. | Number (Integer for location ID) |
+| USE_HTTPS | This is a true/false flag that identifies if we will be running this using https or not. To learn more on how to set this up read [HTTPS.md](src/server/bin/keys/HTTPS.md). | true/false |
+| SSL_KEY_PASS | This is the password that was used to generate the private key for the SSL cert that is used for HTTPS. To learn more on how to set this works, read [HTTPS.md](src/server/bin/keys/HTTPS.md) | String |
+| SCANNER_ADMIN_PIN | This is the pin that we use to authenticate scanners when they connect to redis server and try to get an API_KEY. Scanners will not be able to get an api key without this pin. | String |
+| ADMIN_PASS | This is the password to login into the ad@min.com user that is the default admin of the redis-server. | String
 
 ## Documentation
 Documentation is stored in the `doc/` folder. To view it, open the 
