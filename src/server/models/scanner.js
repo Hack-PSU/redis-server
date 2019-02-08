@@ -9,6 +9,10 @@ var Scanner = new Schema({
     required: true,
     unique: true
   },
+  pin: {
+    type: Number,
+    required: true
+  },
   name: {
     type: String,
     default: 'New-Scanner'
