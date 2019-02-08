@@ -4,25 +4,6 @@ $(document).ready(function() {
 
 
 
-    $('#add-scanner-form').submit(function(event) {
-        event.preventDefault();
-        $('#product-response').text('');
-        var payload = {name: $('#product-name').val(), amount:$('#product-price').val()};
-        $.ajax({
-            type: 'POST',
-            url: '/api/scanners',
-            data: payload
-        })
-            .done(function(data) {
-                $('#product-response').text('Yay! Product Added!');
-            })
-            .fail(function() {
-                $('#product-response').text('Yike! Something went wrong.');
-            });
-        $('#product-name').val('');
-        $('#product-price').val('');
-    });
-
     $('[id^=delete-scanner-form]').submit(function(event) {
         event.preventDefault();
         $('#product-response').text('');
@@ -36,11 +17,35 @@ $(document).ready(function() {
             data: payload
         })
             .done(function(data) {
-                $('#product-response').text('Yay! Product Removed!');
+                $("#scanners").load( "scanners #scanners" );
+                //$('#product-response').text('Yay! Product Removed!');
             })
             .fail(function() {
                 $('#product-response').text('Yike! Remvoing Something went wrong.');
             });
+        $('#product-name').val('');
+        $('#product-price').val('');
+    });
+
+    $('#add-scanner-form').submit(function(event) {
+        event.preventDefault();
+        $('#product-response').text('');
+        var payload = {};
+        var url = '/api/scanners/';
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: payload
+        })
+          .done(function(result) {
+              //$("#scanners").html(ajax_load).load(loadUrl);
+              $("#scanners").load( "scanners #scanners" );
+              //$('#product-response').text('Created New Scanner!');
+
+          })
+          .fail(function() {
+              $('#product-response').text('Yike! Remvoing Something went wrong.');
+          });
         $('#product-name').val('');
         $('#product-price').val('');
     });

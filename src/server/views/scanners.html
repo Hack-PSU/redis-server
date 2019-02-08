@@ -7,15 +7,19 @@
 
 <div class="container">
     <h1>Scanner List</h1>
-    <p class="lead">Which would you like to change?</p>
-    <a href="/">Go home</a>
+    <p class="lead">What would you like to change?</p>
+    <!--<a href="/">Go home</a> -->
+    <form id="add-scanner-form">
+        <button type="submit" class="btn btn-primary">Add</button>
+    </form>
     <br><br>
     <p id="product-response"></p>
-    <table class="table table-hover" style="max-width:400px;">
+    <table id="scanners" class="table table-hover" style="max-width:400px;">
         <thead>
         <tr>
             <th>Scanner Name</th>
             <th>Scanner API Key</th>
+            <th>Scanner Pin</th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -24,6 +28,7 @@
         <tr>
             <td><a href="/scanner/{{scanner._id.toString()}}">{{ scanner.name }}</a></td>
             <td>{{scanner.apikey }}</td>
+            <td>{{scanner.pin}}</td>
             <td>
                 <form id="delete-scanner-form{{scanner.id}}">
                     <button type="submit" class="btn btn-primary">Delete</button>
