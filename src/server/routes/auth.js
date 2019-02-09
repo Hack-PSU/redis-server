@@ -243,15 +243,15 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     err.status = 401;
     return next(err);
     //remove existing scanner out
+  }else{
+    console.log("Made it here!!!");
+    //scanner.save();
+    return res.status(200).json({
+      status: "success",
+      data: scanner,
+      message: "Scanner Added. API Key Generated."
+    });
   }
-  console.log("Made it here!!!");
-  //scanner.save();
-  res.status(200).json({
-    status: "success",
-    data: scanner,
-    message: "Scanner Added. API Key Generated."
-  });
-  return next();
 
 
 }));

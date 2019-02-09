@@ -9,6 +9,7 @@ let redis = require('../../lib/redis').redis;
 let redisIsConnected = require('../../lib/redis').redisIsConnected;
 let request = require("request-promise-native");
 let serverOptions = require('../../lib/remoteServer');
+const asyncMiddleware = require('../../lib/asyncMiddleware');
 
 
 /**
