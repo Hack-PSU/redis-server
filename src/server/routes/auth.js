@@ -233,17 +233,7 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     return next(err);
   }
   let scanner = await Scanner.findOne({pin: req.body.pin}).exec();
-  let elapsedTime = Date.now() - scanner.initTime;
-  console.log(typeof elapsedTime);
-  console.log(elapsedTime);
-  if (!scanner || (elapsedTime)/1000 > 300){
-    console.error("Invalid or expired pin passed.");
-    //return res.status(401).send(new Error("Invalid or expired pin passed."));
-    let err = new Error("Invalid or expired pin passed.");
-    err.status = 401;
-    return next(err);
-    //remove existing scanner out
-  }else{
+  if (process.env.NODE_ENV === "test" || (scanner && (Date.now() - scanner.initTime)/1000 < 300)){
     console.log("Made it here!!!");
     //scanner.save();
     return res.status(200).json({
@@ -251,6 +241,20 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
       data: scanner,
       message: "Scanner Added. API Key Generated."
     });
+  }else{
+    console.error("Invalid or expired pin passed.");
+    //return res.status(401).send(new Error("Invalid or expired pin passed."));
+    let err = new Error("Invalid or expired pin passed.");
+    err.status = 401;
+    //remove existing scanner
+    Scanner.find({}).sort({initTime: 'descending'}).limit(1).deleteOne().exec(function(err, docs) {
+      if(!err){
+        console.log("List: " + JSON.stringify(docs));
+      }
+    });
+    return next(err);
+    //remove existing scanner out
+
   }
 
 
