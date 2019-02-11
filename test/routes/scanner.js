@@ -18,7 +18,7 @@ describe('INTEGRATION TEST: GET /auth/scanner/register', () => {
   let agent = chai.request.agent(app);
   let pin = 0;
   before( mochaAsync(async function (done){
-    await agent.post('/auth/login').send({ email: 'ad@min.com', password: process.env.ADMIN_PASS });
+    await agent.post('/auth/login').send({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASS });
     let res = await agent.post('/api/scanners/');
     console.log("AGENT BODY: " + JSON.stringify(res.body));
     res.should.have.status(200);
@@ -51,7 +51,7 @@ describe('INTEGRATION TEST: GET /auth/updatedb', () => {
 
   it('it should get login and update redis db', (done) => {
     agent.post('/auth/login')
-      .send({ email: 'ad@min.com', password: process.env.ADMIN_PASS })
+      .send({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASS })
       .then(function (res) {
         //res.should.have.cookie('sessionid');
         // The `agent` now has the sessionid cookie saved, and will send it
@@ -79,7 +79,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
   //Needed to remove all extraneous data from Mongo and Redis and reload with proper data before moving forward.
   before( mochaAsync(async function (done) {
     await Scanner.deleteMany({}).exec();
-    await agent.post('/auth/login').send({ email: 'ad@min.com', password: process.env.ADMIN_PASS });
+    await agent.post('/auth/login').send({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASS });
     let pinRes = await agent.post('/api/scanners/');
     await agent.get('/auth/removeall');
     let updateDBRes = await agent.get('/auth/updatedb');

@@ -234,8 +234,6 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
   }
   let scanner = await Scanner.findOne({pin: req.body.pin}).exec();
   if (process.env.NODE_ENV === "test" || (scanner && (Date.now() - scanner.initTime)/1000 < 300)){
-    console.log("Made it here!!!");
-    //scanner.save();
     return res.status(200).json({
       status: "success",
       data: scanner,
@@ -243,13 +241,12 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     });
   }else{
     console.error("Invalid or expired pin passed.");
-    //return res.status(401).send(new Error("Invalid or expired pin passed."));
     let err = new Error("Invalid or expired pin passed.");
     err.status = 401;
     //remove existing scanner
     Scanner.find({}).sort({initTime: 'descending'}).limit(1).deleteOne().exec(function(err, docs) {
       if(!err){
-        console.log("List: " + JSON.stringify(docs));
+        console.log(JSON.stringify(docs));
       }
     });
     return next(err);
