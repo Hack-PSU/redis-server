@@ -6,7 +6,7 @@ const Scanner = require('../../src/server/models/scanner');
 const should = chai.should();
 
 chai.use(chaiHttp);
-var mochaAsync = (fn) => {
+let mochaAsync = (fn) => {
   return done => {
     fn.call().then(done, err => {
       done(err);
