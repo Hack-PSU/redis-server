@@ -241,7 +241,6 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     scanner.expireAt = moment().add(3, 'days');
     scanner.isAssigned = true;
     let saveRes = await scanner.save();
-    console.log(saveRes);
     return res.status(200).json({
       status: "success",
       data: scanner,

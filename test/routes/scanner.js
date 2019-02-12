@@ -85,7 +85,6 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
     let updateDBRes = await agent.get('/auth/updatedb');
     updateDBRes.should.have.status(200);
     agent.close();
-    console.log("AGENT BODY: " + JSON.stringify(pinRes.body));
     pinRes.should.have.status(200);
     pinRes.body.should.contain.keys(["status", "data", "message"]);
     pinRes.body.data.should.contain.keys(["pin", "name"]);
@@ -95,8 +94,6 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
       "pin": apiPin
     };
     let scannerRes = await chai.request(app).post('/auth/scanner/register').send(body);
-    console.log(scannerRes.body);
-    console.log(scannerRes.status);
     scannerRes.should.have.status(200);
     scannerRes.body.should.contain.keys(["status", "data", "message"]);
     scannerRes.body.status.should.be.equal("success");
@@ -146,7 +143,6 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
       .get('/rfid/active-locations')
       .end((err, res) => {
         should.equal(err, null);
-        console.log(res.body);
         res.should.have.status(200);
         res.body.should.contain.keys(["status", "locations", "length", "message"]);
         res.body.status.should.be.equal("success");
