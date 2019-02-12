@@ -251,13 +251,9 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     let err = new Error("Invalid or expired pin passed.");
     err.status = 401;
     //remove existing scanner
-    Scanner.find({ isAssigned:false }).sort({initTime: 'descending'}).limit(1).deleteOne().exec(function(err, docs) {
-      if(!err){
-        console.log(JSON.stringify(docs));
-      }
-    });
+    let docs = await Scanner.find({ isAssigned:false }).sort({initTime: 'descending'}).limit(1).deleteOne().exec();
+    console.log(docs);
     return next(err);
-    //remove existing scanner out
 
   }
 
