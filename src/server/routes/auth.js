@@ -186,23 +186,27 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
  *       "pin": 1234
  *     }
  *
- * @apiSuccess {String} status          Status of response.
- * @apiSuccess {Object} data            User tab information.
- * @apiSuccess {String} data.name       Auto-Generated Name for Scanner
- * @apiSuccess {String} data._id        Scanner's universal ID
- * @apiSuccess {String} data.initTime   Date and Time that the Key was generated
- * @apiSuccess {String} data.apikey     The API key that the scanner can now use
- * @apiSuccess {String} data.pin        The pin that the scanner needs to use to get API key
- * @apiSuccess {String} message         Response Message.
+ * @apiSuccess {String} status            Status of response.
+ * @apiSuccess {Object} data              User tab information.
+ * @apiSuccess {Boolean} data.isAssigned  Boolean saying if apikey has been assigned to a scanner.
+ * @apiSuccess {String} data.name         Auto-Generated Name for Scanner
+ * @apiSuccess {String} data._id          Scanner's universal ID
+ * @apiSuccess {String} data.createdAt    Date and Time that the Key was generated
+ * @apiSuccess {String} data.expireAt     Date and Time that the Key will expire
+ * @apiSuccess {String} data.apikey       The API key that the scanner can now use
+ * @apiSuccess {String} data.pin          The pin that the scanner needs to use to get API key
+ * @apiSuccess {String} message           Response Message.
  *
  * @apiSuccessExample {json} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
  *       status: "success",
  *       data: {
+ *         isAssigned: true,
  *         name: "2019-02-08T20:57:55.047Z",
  *         _id: "5bb170f354fd0f590ddf4103",
- *         initTime: "2019-02-08T20:57:55.046Z",
+ *         createdAt: "2019-02-12T06:22:17.233Z",
+ *         expireAt: "2019-02-15T06:23:25.971Z",
  *         apikey: "0f865521-2c05-467d-ad43-a9bac2108db9",
  *         pin: 3971
  *       },
@@ -233,7 +237,11 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     return next(err);
   }
   let scanner = await Scanner.findOne({ pin: req.body.pin }).exec();
-  if (process.env.NODE_ENV === "test" || (scanner && (Date.now() - scanner.initTime)/1000 < 300)){
+  if (process.env.NODE_ENV === "test" || (scanner && !scanner.isAssigned) ){
+    scanner.expireAt = moment().add(3, 'days');
+    scanner.isAssigned = true;
+    let saveRes = await scanner.save();
+    console.log(saveRes);
     return res.status(200).json({
       status: "success",
       data: scanner,
@@ -244,7 +252,7 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     let err = new Error("Invalid or expired pin passed.");
     err.status = 401;
     //remove existing scanner
-    Scanner.find({}).sort({initTime: 'descending'}).limit(1).deleteOne().exec(function(err, docs) {
+    Scanner.find({ isAssigned:false }).sort({initTime: 'descending'}).limit(1).deleteOne().exec(function(err, docs) {
       if(!err){
         console.log(JSON.stringify(docs));
       }
