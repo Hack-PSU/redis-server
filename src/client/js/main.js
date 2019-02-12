@@ -7,10 +7,11 @@ $(document).ready(function() {
     $('[id^=delete-scanner-form]').submit(function(event) {
         event.preventDefault();
         $('#product-response').text('');
-        var payload = {};
-        var index = this.id;
-        index = index.substring(19);
-        var url = '/api/scanners/' + index;
+        let payload = {};
+        let scannerID = this.id;
+        let index = scannerID.indexOf(":") + 1;
+        scannerID = scannerID.substring(index);
+        let url = '/api/scanners/' + scannerID;
         $.ajax({
             type: 'DELETE',
             url: url,
@@ -43,8 +44,9 @@ $(document).ready(function() {
               //$('#product-response').text('Created New Scanner!');
 
           })
-          .fail(function() {
-              $('#product-response').text('Yike! Remvoing Something went wrong.');
+          .fail(function(err) {
+              console.error(JSON.stringify(err));
+              $('#product-response').text('Yikes! Removing something went wrong.');
           });
         $('#product-name').val('');
         $('#product-price').val('');

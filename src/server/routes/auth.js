@@ -232,7 +232,7 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     err.status = 401;
     return next(err);
   }
-  let scanner = await Scanner.findOne({pin: req.body.pin}).exec();
+  let scanner = await Scanner.findOne({ pin: req.body.pin }).exec();
   if (process.env.NODE_ENV === "test" || (scanner && (Date.now() - scanner.initTime)/1000 < 300)){
     return res.status(200).json({
       status: "success",
@@ -274,7 +274,7 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
  *     HTTP/1.1 401 Unauthorized
  *     "Invalid pin passed"
  */
-router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
+router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function (req, res, next) {
   if (!redisIsConnected()) {
     req.flash('message', {
       status: 'danger',
@@ -285,78 +285,75 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
   let options = helpers.clone(serverOptions);
   let uri = options.uri;
   options.uri = uri + '/scanner/registrations';
-  request(options)
-    .then(function (response) {
-      // Request was successful, use the response object at will
-      //do redis stuff then
-      let numErrors = 0;
-      let promises = [];
-      //code to build promises to run
-      response.map(function (element) {
-        //console.log(element.rfid_uid);
-        promises.push(new Promise(function (resolve, reject) {
-            redis.hmset(element.pin, {
-              "uid": element.uid,
-              "pin": element.pin || "NULL",
-              "name": element.firstname + ' ' + element.lastname,
-              "shirtSize": element.shirt_size,
-              "diet": element.dietary_restriction || "NULL",
-              "counter": 0,
-              "numScans": 0
+  try{
+    let response = await request(options);
+    // Request was successful, use the response object at will
+    //do redis stuff then
+    let numErrors = 0;
+    let promises = [];
+    //code to build promises to run
+    response.map(function (element) {
+      //console.log(element.rfid_uid);
+      promises.push(new Promise(function (resolve, reject) {
+          redis.hmset(element.pin, {
+            "uid": element.uid,
+            "pin": element.pin || "NULL",
+            "name": element.firstname + ' ' + element.lastname,
+            "shirtSize": element.shirt_size,
+            "diet": element.dietary_restriction || "NULL",
+            "counter": 0,
+            "numScans": 0
 
-            }, function (err, reply) {
-              // reply is null when the key is missing
-              if (err) {
-                //todo: make queue to reinsert into db
-                numErrors++;
-                console.log("ERROR inserting into db: " + err);
-                resolve();
-              } else {
-                //console.log("Successfully opened tab with info!");
-                resolve();
-              }
-            });
-          })
-        );
-
-      });
-
-      //run promises
-      Promise.all(promises).then(function () {
-        //return to homepage with success flash.
-        if (numErrors > 0) {
-          //err
-          console.log("REDIRECTED TO ERR");
-          req.flash('message', {
-            status: 'danger',
-            value: 'Some inserts into redis failed.'
+          }, function (err, reply) {
+            // reply is null when the key is missing
+            if (err) {
+              //todo: make queue to reinsert into db
+              numErrors++;
+              console.log("ERROR inserting into db: " + err);
+              resolve();
+            } else {
+              //console.log("Successfully opened tab with info!");
+              resolve();
+            }
           });
-          return res.redirect('/auth/profile');
-        } else {
-          //success
-          console.log("REDIRECTED TO SUCC");
-          req.flash('message', {
-            status: 'success',
-            value: 'Successfully added all users to redis.'
-          });
-          return res.redirect('/auth/profile');
-        }
-      });
+        })
+      );
 
-
-    })
-    .catch(function (err) {
-      // Something bad happened, handle the error
-      console.log(err);
-      req.flash('message', {
-        status: 'danger',
-        value: 'An Error Occurred.'
-      });
-      return res.redirect('/auth/profile');
     });
 
+    //run promises
+    Promise.all(promises).then(function () {
+      //return to homepage with success flash.
+      if (numErrors > 0) {
+        //err
+        console.log("REDIRECTED TO ERR");
+        req.flash('message', {
+          status: 'danger',
+          value: 'Some inserts into redis failed.'
+        });
+        return res.redirect('/auth/profile');
+      } else {
+        //success
+        console.log("REDIRECTED TO SUCC");
+        req.flash('message', {
+          status: 'success',
+          value: 'Successfully added all users to redis.'
+        });
+        return res.redirect('/auth/profile');
+      }
+    });
+  }catch(err){
+    // Something bad happened, handle the error
+    console.log(err);
+    req.flash('message', {
+      status: 'danger',
+      value: 'An Error Occurred.'
+    });
+    return res.redirect('/auth/profile');
+  }
 
-});
+
+}));
 
 //Readds everyone from server information. Recommend flushing DB before doing this.
 /**

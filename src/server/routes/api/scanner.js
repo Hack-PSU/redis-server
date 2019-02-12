@@ -50,7 +50,6 @@ router.post('/scanners', helpers.ensureAdminJSON,
   function (req, res, next) {
 
     let scanner = new Scanner();
-    scanner.apikey = uuidv4();
     scanner.name = (new Date()).toISOString();
     // Generate 4 digit pin
     scanner.pin = Math.floor(1000 + Math.random() * 9000);
