@@ -1,10 +1,10 @@
-var express = require('express');
-var router = express.Router();
-var mongoose = require('mongoose-q')(require('mongoose'));
+let express = require('express');
+let router = express.Router();
+let mongoose = require('mongoose-q')(require('mongoose'));
 const uuidv4 = require('uuid/v4');
-var passport = require('../../lib/auth');
-var helpers = require('../../lib/helpers');
-var Scanner = require('../../models/scanner');
+let passport = require('../../lib/auth');
+let helpers = require('../../lib/helpers');
+let Scanner = require('../../models/scanner');
 
 
 // ** users ** //
@@ -70,9 +70,9 @@ router.post('/scanners', helpers.ensureAdminJSON,
 // update SINGLE user
 router.put('/scanners/:id', helpers.ensureAdminJSON,
   function (req, res, next) {
-    var id = req.params.id;
-    var update = req.body;
-    var options = {new: true, upsert: true};
+    let id = req.params.id;
+    let update = req.body;
+    let options = {new: true, upsert: true};
     Scanner.findByIdAndUpdateQ(id, update, options)
       .then(function (result) {
         res.status(200)
