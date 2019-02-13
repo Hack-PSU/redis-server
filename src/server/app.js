@@ -97,6 +97,7 @@ app.use(function (req, res, next) {
 // will print stacktrace
 if (app.get('env') === 'development') {
   app.use(function (err, req, res, next) {
+    //TODO: if request came from browser, return the following commented out lines
     /*res.render('error', {
       message: err.message,
       error: err

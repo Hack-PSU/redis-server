@@ -48,7 +48,6 @@ router.get('/scanners/:id', helpers.ensureAdminJSON,
 // add new scanner
 router.post('/scanners', helpers.ensureAdminJSON,
   function (req, res, next) {
-
     let scanner = new Scanner();
     scanner.name = (new Date()).toISOString();
     // Generate 4 digit pin

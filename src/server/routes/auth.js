@@ -238,6 +238,11 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
   }
   let scanner = await Scanner.findOne({ pin: req.body.pin }).exec();
   if (process.env.NODE_ENV === "test" || (scanner && !scanner.isAssigned) ){
+    console.log(JSON.stringify(req.headers));
+    let macAddr = req.headers.macaddr;
+    if(macAddr){
+      scanner.name = macAddr;
+    }
     scanner.expireAt = moment().add(3, 'days');
     scanner.isAssigned = true;
     let saveRes = await scanner.save();
