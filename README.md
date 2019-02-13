@@ -107,11 +107,12 @@ Here are the variables that we currently use in our codebase:
 | SERVER_VERSION | This variable details the version of code your main API server is running. Your main API server could be running multiple versions, each hosted on the same hostname but a different route (i.e */v1/* vs */v2/*). | Route *(i.e: v1, v2, v3, ...)* |
 | SERVER_API_KEY | This is the API_KEY that you'll use to authenticate yourself to your main API server. | String |
 | FOOD | This is the number that represents the location ID for food events so we can understand if people have been trying to get a second serving before others have gotten a first. | Number (Integer for location ID) |
+| MONGOLAB_URI | This is the URL that you would use in production/stage to connect to mongodb | URL (i.e: mongodb://localhost/node-redis-hackpsu) |
 | USE_HTTPS | This is a true/false flag that identifies if we will be running this using https or not. To learn more on how to set this up read [HTTPS.md](src/server/bin/keys/HTTPS.md). | true/false |
 | SSL_KEY_PASS | This is the password that was used to generate the private key for the SSL cert that is used for HTTPS. To learn more on how to set this works, read [HTTPS.md](src/server/bin/keys/HTTPS.md) | String |
 | SCANNER_ADMIN_PIN | This is the pin that we use to authenticate scanners when they connect to redis server and try to get an API_KEY. Scanners will not be able to get an api key without this pin. | String |
-| ADMIN_PASS | This is the password to login into the ad@min.com user that is the default admin of the redis-server. | String
-
+| ADMIN_PASS | This is the password to login into the ad@min.com user that is the default admin of the redis-server. | String |
+| ADMIN_EMAIL | This is the email to create the admin user account that is the default admin of the redis-server. | String (usually ad@min.com) |
 ## Documentation
 Documentation is stored in the `doc/` folder. To view it, open the 
 `index.html` file inside the folder using a browser. 

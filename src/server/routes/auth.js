@@ -11,6 +11,7 @@ let passport = require('../lib/auth');
 let helpers = require('../lib/helpers');
 let User = require('../models/user');
 let Scanner = require('../models/scanner');
+const asyncMiddleware = require('../lib/asyncMiddleware');
 
 // Middleware to require login/auth
 const requireAuth = passport.authenticate('user-mobile', {session: false});
@@ -171,7 +172,7 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
 
 /**
  * @api {post} /auth/scanner/register Register Scanner
- * @apiVersion 2.0.0
+ * @apiVersion 2.0.1
  * @apiName RegisterScanner
  * @apiGroup Admin
  * @apiDescription
@@ -182,30 +183,44 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
  * @apiParam {String} pin Pin to use to prove that valid scanner is connecting to Redis. (Set valid pin in .env file)
  * @apiParamExample {json} Request Body Example
  *     {
- *       pin: "MASTER_KEY"
+ *       "pin": 1234
  *     }
  *
- * @apiSuccess {String} status          Status of response.
- * @apiSuccess {Object} data            User tab information.
- * @apiSuccess {String} data.name       Auto-Generated Name for Scanner
- * @apiSuccess {String} data._id        Scanner's universal ID
- * @apiSuccess {String} data.apikey     The API key that the scanner can now use
- * @apiSuccess {String} message         Response Message.
+ * @apiSuccess {String} status            Status of response.
+ * @apiSuccess {Object} data              User tab information.
+ * @apiSuccess {Boolean} data.isAssigned  Boolean saying if apikey has been assigned to a scanner.
+ * @apiSuccess {String} data.name         Auto-Generated Name for Scanner
+ * @apiSuccess {String} data._id          Scanner's universal ID
+ * @apiSuccess {String} data.createdAt    Date and Time that the Key was generated
+ * @apiSuccess {String} data.expireAt     Date and Time that the Key will expire
+ * @apiSuccess {String} data.apikey       The API key that the scanner can now use
+ * @apiSuccess {String} data.pin          The pin that the scanner needs to use to get API key
+ * @apiSuccess {String} message           Response Message.
  *
  * @apiSuccessExample {json} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
  *       status: "success",
  *       data: {
- *         name: "2018-10-01T00:57:23.370Z",
+ *         isAssigned: true,
+ *         name: "2019-02-08T20:57:55.047Z",
  *         _id: "5bb170f354fd0f590ddf4103",
- *         apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *         createdAt: "2019-02-12T06:22:17.233Z",
+ *         expireAt: "2019-02-15T06:23:25.971Z",
+ *         apikey: "0f865521-2c05-467d-ad43-a9bac2108db9",
+ *         pin: 3971
  *       },
  *       message: "Scanner Added. API Key Generated."
  *     }
  * @apiErrorExample {json} 401 Response
  *     HTTP/1.1 401 Unauthorized
- *     "Invalid pin passed"
+ *     {
+ *        "status": "error",
+ *        "message": "Invalid or expired pin passed.",
+ *        "error": {
+ *            "status": 401
+ *        }
+ *     }
  * @apiErrorExample {json} 500 Response
  *     HTTP/1.1 500 Server Error
  *     {
@@ -214,32 +229,41 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
  *       message: "There was an error."
  *     }
  */
-router.post('/scanner/register', function (req, res, next) {
-  if (!req.body.pin || req.body.pin !== process.env.SCANNER_ADMIN_PIN) {
+router.post('/scanner/register', asyncMiddleware(async function (req, res, next) {
+  if (!req.body.pin) {
     console.error("Invalid pin passed");
-    return res.status(401).send(new Error("Invalid pin passed"));
+    let err = new Error("Invalid pin passed");
+    err.status = 401;
+    return next(err);
   }
-  let pin = req.body.pin;
-  let newScanner = new Scanner();
-  newScanner.apikey = uuidv4();
-  newScanner.name = (new Date()).toISOString();
-  newScanner.save(function (err, results) {
-    if (err) {
-      console.log(err);
-      res.status(500).json({
-        status: "error",
-        data: err,
-        message: "There was an error."
-      });
-    } else {
-      res.status(200).json({
-        status: "success",
-        data: results,
-        message: "Scanner Added. API Key Generated."
-      });
+  let scanner = await Scanner.findOne({ pin: req.body.pin }).exec();
+  if (process.env.NODE_ENV === "test" || (scanner && !scanner.isAssigned) ){
+    console.log(JSON.stringify(req.headers));
+    let macAddr = req.headers.macaddr;
+    if(macAddr){
+      scanner.name = macAddr;
     }
-  });
-});
+    scanner.expireAt = moment().add(3, 'days');
+    scanner.isAssigned = true;
+    let saveRes = await scanner.save();
+    return res.status(200).json({
+      status: "success",
+      data: scanner,
+      message: "Scanner Added. API Key Generated."
+    });
+  }else{
+    console.error("Invalid or expired pin passed.");
+    let err = new Error("Invalid or expired pin passed.");
+    err.status = 401;
+    //remove existing scanner
+    let docs = await Scanner.find({ isAssigned:false }).sort({initTime: 'descending'}).limit(1).deleteOne().exec();
+    console.log(docs);
+    return next(err);
+
+  }
+
+
+}));
 
 /**
  * @api {get} /auth/updatedb Update Redis DB
@@ -258,7 +282,7 @@ router.post('/scanner/register', function (req, res, next) {
  *     HTTP/1.1 401 Unauthorized
  *     "Invalid pin passed"
  */
-router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
+router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function (req, res, next) {
   if (!redisIsConnected()) {
     req.flash('message', {
       status: 'danger',
@@ -269,78 +293,75 @@ router.get('/updatedb', helpers.ensureAdminJSON, function (req, res, next) {
   let options = helpers.clone(serverOptions);
   let uri = options.uri;
   options.uri = uri + '/scanner/registrations';
-  request(options)
-    .then(function (response) {
-      // Request was successful, use the response object at will
-      //do redis stuff then
-      let numErrors = 0;
-      let promises = [];
-      //code to build promises to run
-      response.map(function (element) {
-        //console.log(element.rfid_uid);
-        promises.push(new Promise(function (resolve, reject) {
-            redis.hmset(element.pin, {
-              "uid": element.uid,
-              "pin": element.pin || "NULL",
-              "name": element.firstname + ' ' + element.lastname,
-              "shirtSize": element.shirt_size,
-              "diet": element.dietary_restriction || "NULL",
-              "counter": 0,
-              "numScans": 0
+  try{
+    let response = await request(options);
+    // Request was successful, use the response object at will
+    //do redis stuff then
+    let numErrors = 0;
+    let promises = [];
+    //code to build promises to run
+    response.map(function (element) {
+      //console.log(element.rfid_uid);
+      promises.push(new Promise(function (resolve, reject) {
+          redis.hmset(element.pin, {
+            "uid": element.uid,
+            "pin": element.pin || "NULL",
+            "name": element.firstname + ' ' + element.lastname,
+            "shirtSize": element.shirt_size,
+            "diet": element.dietary_restriction || "NULL",
+            "counter": 0,
+            "numScans": 0
 
-            }, function (err, reply) {
-              // reply is null when the key is missing
-              if (err) {
-                //todo: make queue to reinsert into db
-                numErrors++;
-                console.log("ERROR inserting into db: " + err);
-                resolve();
-              } else {
-                //console.log("Successfully opened tab with info!");
-                resolve();
-              }
-            });
-          })
-        );
-
-      });
-
-      //run promises
-      Promise.all(promises).then(function () {
-        //return to homepage with success flash.
-        if (numErrors > 0) {
-          //err
-          console.log("REDIRECTED TO ERR");
-          req.flash('message', {
-            status: 'danger',
-            value: 'Some inserts into redis failed.'
+          }, function (err, reply) {
+            // reply is null when the key is missing
+            if (err) {
+              //todo: make queue to reinsert into db
+              numErrors++;
+              console.log("ERROR inserting into db: " + err);
+              resolve();
+            } else {
+              //console.log("Successfully opened tab with info!");
+              resolve();
+            }
           });
-          return res.redirect('/auth/profile');
-        } else {
-          //success
-          console.log("REDIRECTED TO SUCC");
-          req.flash('message', {
-            status: 'success',
-            value: 'Successfully added all users to redis.'
-          });
-          return res.redirect('/auth/profile');
-        }
-      });
+        })
+      );
 
-
-    })
-    .catch(function (err) {
-      // Something bad happened, handle the error
-      console.log(err);
-      req.flash('message', {
-        status: 'danger',
-        value: 'An Error Occurred.'
-      });
-      return res.redirect('/auth/profile');
     });
 
+    //run promises
+    Promise.all(promises).then(function () {
+      //return to homepage with success flash.
+      if (numErrors > 0) {
+        //err
+        console.log("REDIRECTED TO ERR");
+        req.flash('message', {
+          status: 'danger',
+          value: 'Some inserts into redis failed.'
+        });
+        return res.redirect('/auth/profile');
+      } else {
+        //success
+        console.log("REDIRECTED TO SUCC");
+        req.flash('message', {
+          status: 'success',
+          value: 'Successfully added all users to redis.'
+        });
+        return res.redirect('/auth/profile');
+      }
+    });
+  }catch(err){
+    // Something bad happened, handle the error
+    console.log(err);
+    req.flash('message', {
+      status: 'danger',
+      value: 'An Error Occurred.'
+    });
+    return res.redirect('/auth/profile');
+  }
 
-});
+
+}));
 
 //Readds everyone from server information. Recommend flushing DB before doing this.
 /**

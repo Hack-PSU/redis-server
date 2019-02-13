@@ -7,7 +7,7 @@
     "test": "mocha --exit --timeout 10000 --recursive",
     "cov": "./node_modules/.bin/istanbul cover _mocha -- -R spec",
     "send-coverage": "./node_modules/.bin/istanbul cover --report lcovonly ./node_modules/.bin/_mocha && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
-    "apidoc": "apidoc -i ./src -o doc/"
+    "apidoc": "apidoc -i ./src -o ./src/client/doc/"
   },
   "repository": {
     "type": "git",

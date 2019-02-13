@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var mongoose = require('mongoose-q')(require('mongoose'));
-
+const uuidv4 = require('uuid/v4');
 var passport = require('../../lib/auth');
 var helpers = require('../../lib/helpers');
 var Scanner = require('../../models/scanner');
@@ -45,37 +45,21 @@ router.get('/scanners/:id', helpers.ensureAdminJSON,
       .done();
   });
 
-// add new user
+// add new scanner
 router.post('/scanners', helpers.ensureAdminJSON,
   function (req, res, next) {
-    Scanner.findOneQ({email: req.body.email})
-      .then(function (existingUser) {
-        if (existingUser) {
-          res.status(409)
-            .json({
-              status: 'error',
-              data: null,
-              message: 'Email is already in use.'
-            });
-        } else {
-          var user = new User(req.body);
-          user.saveQ()
-            .then(function (result) {
-              res.status(200)
-                .json({
-                  status: 'success',
-                  data: {
-                    email: user.email,
-                    admin: user.admin
-                  },
-                  message: 'Created user.'
-                });
-            })
-            .catch(function (err) {
-              return next(err);
-            })
-            .done();
-        }
+    let scanner = new Scanner();
+    scanner.name = (new Date()).toISOString();
+    // Generate 4 digit pin
+    scanner.pin = Math.floor(1000 + Math.random() * 9000);
+    scanner.saveQ()
+      .then(function (scanner) {
+        res.status(200)
+          .json({
+            status: 'success',
+            data: scanner,
+            message: 'Created user.'
+          });
       })
       .catch(function (err) {
         return next(err);
@@ -108,11 +92,11 @@ router.put('/scanners/:id', helpers.ensureAdminJSON,
 router.delete('/scanners/:id', helpers.ensureAdminJSON,
   function (req, res, next) {
     Scanner.findByIdAndRemoveQ(req.params.id)
-      .then(function (user) {
+      .then(function (scanner) {
         res.status(200)
           .json({
             status: 'success',
-            data: user,
+            data: scanner,
             message: 'Removed scanner.'
           });
       })

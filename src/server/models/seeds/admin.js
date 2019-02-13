@@ -7,7 +7,7 @@ let seedAdmin = function () {
     if (documents.length === 0) {
       let password = process.env.ADMIN_PASS;
       let user = new User({
-        email: 'ad@min.com',
+        email: process.env.ADMIN_EMAIL,
         admin: true,
         password: password
       });

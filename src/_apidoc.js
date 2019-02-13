@@ -23,6 +23,57 @@
 // History.
 // ------------------------------------------------------------------------------------------
 
+// ------------------------------------------------------------------------------------------
+// v2.0.0
+/**
+* @api {post} /auth/scanner/register Register Scanner
+* @apiVersion 2.0.0
+* @apiName RegisterScanner
+* @apiGroup Admin
+* @apiDescription
+* Authenticate and register scanner on Redis-Server. This will provide an API Key in return which the scanner will use
+* for any and all requests to redis.
+* @apiPermission Admin
+*
+* @apiParam {String} pin Pin to use to prove that valid scanner is connecting to Redis. (Set valid pin in .env file)
+* @apiParamExample {json} Request Body Example
+*     {
+      *       pin: "MASTER_KEY"
+      *     }
+*
+* @apiSuccess {String} status          Status of response.
+* @apiSuccess {Object} data            User tab information.
+* @apiSuccess {String} data.name       Auto-Generated Name for Scanner
+                                                               * @apiSuccess {String} data._id        Scanner's universal ID
+* @apiSuccess {String} data.apikey     The API key that the scanner can now use
+* @apiSuccess {String} message         Response Message.
+*
+* @apiSuccessExample {json} Success-Response:
+*     HTTP/1.1 200 OK
+*     {
+      *       status: "success",
+      *       data: {
+            *         name: "2018-10-01T00:57:23.370Z",
+            *         _id: "5bb170f354fd0f590ddf4103",
+            *         apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+            *       },
+      *       message: "Scanner Added. API Key Generated."
+      *     }
+* @apiErrorExample {json} 401 Response
+*     HTTP/1.1 401 Unauthorized
+*     "Invalid pin passed"
+* @apiErrorExample {json} 500 Response
+*     HTTP/1.1 500 Server Error
+*     {
+      *       status: "error",
+      *       data: {err},
+      *       message: "There was an error."
+      *     }
+*/
+
+
+// ------------------------------------------------------------------------------------------
+// v1.0.0
 /**
  * @apiDefine UserData
  *
