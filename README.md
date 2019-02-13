@@ -156,14 +156,25 @@ $ npm run cov
 
 ## JSON API Documentation
 
+Open the `index.html` file in `./src/client/doc/` folder to get an in-depth look at our api.
 
-### Tabs
+Here is the quick overview of the Server provides:
 
-- POST `/tabs/setup` - Associate user with rfid tag
-- GET `/tabs/updatedb` - Pull user data from remote DB to redis cache
-- POST `/tabs/add` - increment counter to # of scans for RFID & food
-- POST `/tabs/getpin` - pull user information from pin
-- GET `/tabs/resetcounter` - reset all food counters to 0
+### RFID
+
+- POST `/rfid/assignment` - Associate user with WID tag
+- POST `/rfid/scan` - Store and log scan location, wid tag and timestamp. Verify if user is allowed to enter, and send response back.
+- POST `/rfid/user-info` - Get all user information from redis for an WID tag if it has been assigned.
+- POST `/rfid/getpin` - Get all user information from redis that hasn't been assigned an WID tag.
+
+### Admin
+- GET `/auth/resetcounter` - reset all food counters to 0
+- GET `/auth/updatedb` - Pull user data from remote DB to redis cache
+- GET `/auth/removeall` - Remove all users from Redis.
+- POST `/auth/scanner/register` - Authenticate and register scanner on Redis-Server.
+- GET `/auth/reloaddb` - Update Redis Database with user information. 
+- GET `/auth/scanner/removeall` - Remove all scanner objects from MongoDB. 
+
 
 
 

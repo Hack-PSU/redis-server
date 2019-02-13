@@ -108,7 +108,7 @@
 /**
  * @api {post} /tabs/setup Register RFID Band to User
  * @apiVersion 1.0.0
- * @apiName Register RFID
+ * @apiName Register Wristband
  * @apiGroup RFID
  * @apiDescription
  * Register RFID Band to User. Sends assignment to main server, while locally replacing user key to RFID code.
@@ -257,7 +257,7 @@
 /**
  * @api {post} /tabs/user-info Get User with RFID tag
  * @apiVersion 1.0.0
- * @apiName GetRFID
+ * @apiName Get User
  * @apiGroup RFID
  * @apiDescription
  * Get all user information from redis for an RFID tag if it has been assigned.

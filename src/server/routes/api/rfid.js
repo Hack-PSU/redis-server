@@ -54,7 +54,7 @@ let unsent_assignments = [];
 /**
  * @api {post} /rfid/assignment Register Wristband ID to User
  * @apiVersion 2.0.0
- * @apiName Register WID
+ * @apiName Register Wristband
  * @apiGroup RFID
  * @apiDescription
  * Register Wristband to User. Sends assignment to main server, while locally replacing user key to WID code.
@@ -554,7 +554,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, nex
 /**
  * @api {post} /rfid/user-info Get User Info with WID tag
  * @apiVersion 2.0.0
- * @apiName GetWID
+ * @apiName Get User
  * @apiGroup RFID
  * @apiDescription
  * Get all user information from redis for an WID tag if it has been assigned.
