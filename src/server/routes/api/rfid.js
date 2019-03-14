@@ -171,7 +171,7 @@ router.post('/assign', helpers.ensureScannerAuthenticated, function (req, res, n
                 //prep request to send asynch
                 let options = helpers.clone(serverOpt);
                 options.method = 'POST';
-                options.uri = options.uri + '/scanner/assignment';
+                options.uri = options.uri + '/scanner/assign';
                 //TODO: Normalize with other sent scans... talk to sush
                 let scan = {
                   "wid": userRFID,

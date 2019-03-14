@@ -1,5 +1,5 @@
 #!/bin/bash
-PASSPHRASE="change_me"
+PASSPHRASE="hackdaddy"
 if [[ ! -f key.pem || ! -f cert.pem ]] ;then
     # generate private key and enter pass phrase
     openssl genrsa -des3 -passout pass:${PASSPHRASE} -out key.pem 2048
@@ -45,3 +45,5 @@ echo "Enabled HTTPS!!"
 # get fingerprint
 echo "Save this fingerprint for verifying Redis identity on Scanners:"
 openssl x509 -noout -in cert.pem -fingerprint
+echo "Formatted for use in Scanners:"
+ openssl x509 -noout -in cert.pem -fingerprint | awk -F= '{print $2;}' | sed "s/:/, /g" | awk '{printf "{"; for (i = 1; i <= NF; i++) {printf "0x%s ",$i ;} printf "};"; } END {printf "\n";}'

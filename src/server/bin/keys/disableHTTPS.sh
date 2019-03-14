@@ -6,7 +6,7 @@ case "${unameOut}" in
         ;;
 
     Darwin*)
-#update .env flag to disable https
+        #update .env flag to disable https
         sed -i "" "s/USE_HTTPS=true/USE_HTTPS=false/g" ../../../../.env
         ;;
     *)
