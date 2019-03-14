@@ -127,7 +127,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
       "apikey": apikey
     };
     chai.request(app)
-      .post('/rfid/assignment')
+      .post('/rfid/assign')
       .send(body)
       .end((err, res) => {
         should.equal(err, null);
@@ -140,7 +140,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
   });
   it('it should get current active locations', (done) => {
     chai.request(app)
-      .get('/rfid/active-locations')
+      .get('/rfid/events')
       .end((err, res) => {
         should.equal(err, null);
         res.should.have.status(200);

@@ -8,9 +8,14 @@ let helpers = require('../../lib/helpers');
 let redis = require('../../lib/redis').redis;
 let redisIsConnected = require('../../lib/redis').redisIsConnected;
 let request = require("request-promise-native");
-let serverOptions = require('../../lib/remoteServer');
-const asyncMiddleware = require('../../lib/asyncMiddleware');
 
+let serverOpt = null;
+let remoteServer = require('../../lib/remoteServer').then(function (serverOptions) {
+  console.log("LOADED: " + JSON.stringify(serverOptions));
+  serverOpt = serverOptions;
+});
+const asyncMiddleware = require('../../lib/asyncMiddleware');
+console.log(serverOpt);
 
 /**
  * @apiDefine UserData
@@ -50,10 +55,10 @@ let unsent_assignments = [];
 
 //authorization functions
 //all functions with "requireAuth" used to have helpers.ensureAuthenticated
-
+//TODO: make this support array's of assignments recieived check the param example in doc
 /**
- * @api {post} /rfid/assignment Register Wristband ID to User
- * @apiVersion 2.0.0
+ * @api {post} /rfid/assign Register Wristband ID to User
+ * @apiVersion 2.2.0
  * @apiName Register Wristband
  * @apiGroup RFID
  * @apiDescription
@@ -65,9 +70,11 @@ let unsent_assignments = [];
  * @apiParam {String} apikey API key for scanner to authenticate.
  * @apiParamExample {json} Request Body Example
  *     {
- *       wid: "RFID1",
- *       pin: 94,
- *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *        assignments: {
+ *          wid: "RFID1",
+ *          pin: 94,
+ *          apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *        }
  *     }
  *
  * @apiSuccess {String} status  Status of response.
@@ -99,10 +106,10 @@ let unsent_assignments = [];
  *       message: 'Wristband Tag already opened.'
  *     }
  */
-router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, res, next) {
+router.post('/assign', helpers.ensureScannerAuthenticated, function (req, res, next) {
   if(!req.body || !req.body.wid || !req.body.pin){
     console.error("Invalid values passed for wristband id or pin");
-    let err = new Error("Invalid values passed for wid or pin");
+    let err = new Error("Invalid values passed for wid or pin.");
     err.status = 401;
     return next(err);
   }
@@ -116,7 +123,7 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
       return res.status(500)
           .json({
               status: 'error',
-              message: 'Redis database is down'
+              message: 'Redis database is down.'
           });
   }
   redis.hgetall(userRFID, function (err, obj) {
@@ -124,7 +131,7 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
       return res.status(500)
         .json({
           status: 'error',
-          message: 'Something went wrong'
+          message: 'Something went wrong.'
         });
     } else {
       console.log(obj);
@@ -143,7 +150,7 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
             res.status(404).json({
               status: "error",
               data: err,
-              message: "Invalid pin"
+              message: "Invalid pin."
             });
           } else {
             console.log("Successfully set wid to tab!");
@@ -162,12 +169,12 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
                 console.dir(obj);
 
                 //prep request to send asynch
-                let options = helpers.clone(serverOptions);
+                let options = helpers.clone(serverOpt);
                 options.method = 'POST';
                 options.uri = options.uri + '/scanner/assignment';
                 //TODO: Normalize with other sent scans... talk to sush
                 let scan = {
-                  "rfid": userRFID,
+                  "wid": userRFID,
                   "uid": obj.uid,
                   "time": Date.now()
                 };
@@ -389,7 +396,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, nex
     "scan_location": location.toString(),
     "scan_time": Date.now()
   };
-  let options = helpers.clone(serverOptions);
+  let options = helpers.clone(serverOpt);
   let uri = options.uri;
   options.uri = uri + '/scanner/scans';
   options.method = 'POST';
@@ -491,7 +498,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, nex
                 .json({
                   status: 'error',
                   data: obj,
-                  message: 'Couldn\'t find wid'
+                  message: 'WID was lost.'
                 });
             }
             //actually send to server now that we know it exists
@@ -635,8 +642,8 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
 });
 
 /**
- * @api {get} /rfid/active-locations Get all Active Locations
- * @apiVersion 2.0.0
+ * @api {get} /rfid/events Get all Active Locations
+ * @apiVersion 2.1.0
  * @apiName GetActiveLocations
  * @apiGroup RFID
  * @apiPermission Scanner
@@ -646,50 +653,46 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
  * @apiSuccess {Array} locations  Array of currently active locations
  * @apiSuccess {String} message   Response message.
  * @apiSuccessExample {json} Success Response:
- *  HTTP/1.1 200 OK
- *  {
- *    status: 'success',
- *    length: 5,
- *    locations: [
-      {
-        "location_name": "Cybertorium",
-        "uid": 2
-      },
-      {
-        "location_name": "Atrium",
-        "uid": 5
-      },
-      {
-        "location_name": "Business Building Room 120",
-        "uid": 6
-      },
-      {
-        "location_name": "Atrium Staircase",
-        "uid": 11
-      },
-      {
-        "location_name": "Game room",
-        "uid": 15
+ *   HTTP/1.1 200 OK
+ *   {
+      "api_response": "Success",
+      "status": 200,
+      "body": {
+          "data": [
+              {
+                "uid": "00f4f6f0b02747fe86a0f239ed7ea08e",
+                "event_location": 1,
+                "event_start_time": 1550969885214,
+                "event_end_time": 1550969885214,
+                "event_title": "abcde",
+                "event_description": "abcd",
+                "event_type": "workshop",
+                "hackathon": "84ed52ff52f84591aabe151666fae240",
+                "location_name": "124 Business Building"
+              },
+              {...}
+          ],
+          "result": "Success"
       }
-    ],
-    message: 'Found active locations.'
-   }
+    }
  *
  */
-router.get('/active-locations', function (req, res, next) {
+router.get('/events', function (req, res, next) {
 
   let timestamp = Date.now();
-
-  let options = helpers.clone(serverOptions);
+  console.log("SERVER OPTIONS: " + JSON.stringify(serverOpt));
+  console.log("SERVER OPTIONS: " + serverOpt);
+  let options = helpers.clone(serverOpt);
   let uri = options.uri;
-  options.uri = uri + '/scanner/location';
+  options.uri = uri + '/scanner/events';
+  options.qs = {filter: true};
   request(options).then(function (response) {
     //empty list of unsent scans
     console.dir("SUCCESS: " + JSON.stringify(response));
     res.status(200).json({
       status: 'success',
-      locations: response,
-      length: response.length,
+      locations: response.body.data,
+      length: response.body.data.length,
       message: 'Found active locations.'
     });
   }).catch(function (err) {

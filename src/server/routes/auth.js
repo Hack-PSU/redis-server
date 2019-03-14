@@ -4,7 +4,11 @@ let moment = require('moment');
 let jwt = require('jsonwebtoken');
 let redis = require('../lib/redis').redis;
 let redisIsConnected = require('../lib/redis').redisIsConnected;
-let serverOptions = require('../lib/remoteServer');
+let serverOpt = null;
+let remoteServer = require('../lib/remoteServer').then(function (serverOptions) {
+  console.log("LOADED into AUTH: " + JSON.stringify(serverOptions));
+  serverOpt = serverOptions;
+});
 let request = require("request-promise-native");
 const uuidv4 = require('uuid/v4');
 let passport = require('../lib/auth');
@@ -290,17 +294,18 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
     });
     return res.redirect('/auth/profile');
   }
-  let options = helpers.clone(serverOptions);
+  let options = helpers.clone(serverOpt);
   let uri = options.uri;
   options.uri = uri + '/scanner/registrations';
   try{
     let response = await request(options);
+    //console.log("NEW SERVER RESPONSE: " + JSON.stringify(response));
     // Request was successful, use the response object at will
     //do redis stuff then
     let numErrors = 0;
     let promises = [];
     //code to build promises to run
-    response.map(function (element) {
+    response.body.data.map(function (element) {
       //console.log(element.rfid_uid);
       promises.push(new Promise(function (resolve, reject) {
           redis.hmset(element.pin, {
@@ -390,7 +395,7 @@ router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
     });
     return res.redirect('/auth/profile');
   }
-  let options = helpers.clone(serverOptions);
+  let options = helpers.clone(serverOpt);
   let uri = options.uri;
   options.uri = uri + '/scanner/registrations';
   request(options)
