@@ -21,10 +21,25 @@ if [[ ! -f key.pem || ! -f cert.pem ]] ;then
     # remove certain files
     rm server.csr
 fi
-# update passphrase to unlock files
-sed -i "" "s/SSL_KEY_PASS=.*/SSL_KEY_PASS=$PASSPHRASE/g" ../../../../.env
-# update .env flag to enable https
-sed -i "" 's/USE_HTTPS=false/USE_HTTPS=true/g' ../../../../.env
+
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)
+        sed -i "s/SSL_KEY_PASS=.*/SSL_KEY_PASS=$PASSPHRASE/g" ../../../../.env
+	sed -i "s/USE_HTTPS=false/USE_HTTPS=true/g" ../../../../.env
+        ;;
+
+    Darwin*)
+        # update passphrase to unlock files
+        sed -i "" "s/SSL_KEY_PASS=.*/SSL_KEY_PASS=$PASSPHRASE/g" ../../../../.env
+        # update .env flag to enable https
+        sed -i "" "s/USE_HTTPS=false/USE_HTTPS=true/g" ../../../../.env
+        ;;
+    *)
+            echo "Unknown platform." >&2
+            ;;
+esac
+
 
 echo "Enabled HTTPS!!"
 # get fingerprint
