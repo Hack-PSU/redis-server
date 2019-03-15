@@ -323,7 +323,7 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
               //todo: make queue to reinsert into db
               numErrors++;
               console.log("ERROR inserting into db: " + err);
-              resolve();
+              reject();
             } else {
               //console.log("Successfully opened tab with info!");
               resolve();
@@ -333,7 +333,40 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
       );
 
     });
+    options = helpers.clone(serverOpt);
+    let uri = options.uri;
+    options.uri = uri + '/scanner/events';
+    options.qs = {filter: false};
+    response = await request(options);
+    response.body.data.map(function (element) {
+      //console.log(element.rfid_uid);
+      promises.push(new Promise(function (resolve, reject) {
+          redis.hmset(element.uid, {
+            "uid": element.uid,
+            "event_location": element.event_location || 0,
+            "event_start_time": element.event_start_time,
+            "event_end_time": element.event_end_time,
+            "event_title": element.event_title || "NULL",
+            "event_description": element.event_description || "N/A",
+            "event_type": element.event_type,
+            "location_name": element.location_name
 
+          }, function (err, reply) {
+            // reply is null when the key is missing
+            if (err) {
+              //todo: make queue to reinsert into db
+              numErrors++;
+              console.log("ERROR inserting into db: " + err);
+              reject();
+            } else {
+              //console.log("Successfully opened tab with info!");
+              resolve();
+            }
+          });
+        })
+      );
+
+    });
     //run promises
     Promise.all(promises).then(function () {
       //return to homepage with success flash.
