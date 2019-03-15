@@ -46,4 +46,4 @@ echo "Enabled HTTPS!!"
 echo "Save this fingerprint for verifying Redis identity on Scanners:"
 openssl x509 -noout -in cert.pem -fingerprint
 echo "Formatted for use in Scanners:"
- openssl x509 -noout -in cert.pem -fingerprint | awk -F= '{print $2;}' | sed "s/:/, /g" | awk '{printf "{"; for (i = 1; i <= NF; i++) {printf "0x%s ",$i ;} printf "};"; } END {printf "\n";}'
+ openssl x509 -noout -in cert.pem -fingerprint | awk -F= '{print $2;}' | sed "s/:/, /g" | awk '{for (i = 1; i <= NF; i++) {printf "0x%s",$i ;} } END {printf "\n";}'
