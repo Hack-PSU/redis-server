@@ -435,6 +435,12 @@ router.post('/scan', helpers.ensureScannerAuthenticated, asyncMiddleware( async 
       } else {
         //check location
         let event = await redisAsyncGetAll(location);
+        if (!event){
+          console.error("Invalid value passed for location ");
+          let err = new Error("Invalid value passed for location");
+          err.status = 401;
+          return next(err);
+        }
         console.log(JSON.stringify(event));
         let eventType = event.event_type;
         console.log("EVENT TYPE: " + eventType);
@@ -703,22 +709,27 @@ router.get('/events', function (req, res, next) {
       length: response.body.data.length,
       message: 'Found active locations.'
     });
-    /*options.qs = {filter: false};
+    options.qs = {filter: false};
     response = await request(options);
     let multi = redis.multi();
+    console.log(response.body.data);
     for(let event in response.body.data){
-      mutli.hmset(element.uid, {
-        "uid": element.uid,
-        "event_location": element.event_location || 0,
-        "event_start_time": element.event_start_time,
-        "event_end_time": element.event_end_time,
-        "event_title": element.event_title || "NULL",
-        "event_description": element.event_description || "N/A",
-        "event_type": element.event_type,
-        "location_name": element.location_name
+      console.log(event);
+      /*multi.hmset(event.uid, {
+        "uid": event.uid,
+        "event_location": event.event_location || 0,
+        "event_start_time": event.event_start_time,
+        "event_end_time": event.event_end_time,
+        "event_title": event.event_title || "NULL",
+        "event_description": event.event_description || "N/A",
+        "event_type": event.event_type,
+        "location_name": event.location_name
 
-      }, redis.print);
-    }*/
+      }, redis.print);*/
+    }
+    multi.exec(function (err, replies) {
+      console.log(replies); // 101, 2
+    });
   })).catch(function (err) {
     // Something bad happened, handle the error
     console.log(err);
