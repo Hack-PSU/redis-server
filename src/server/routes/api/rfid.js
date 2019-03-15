@@ -712,10 +712,10 @@ router.get('/events', function (req, res, next) {
     options.qs = {filter: false};
     response = await request(options);
     let multi = redis.multi();
-    console.log(response.body.data);
-    for(let event in response.body.data){
+    for(let i=0; i < response.body.data.length; i++){
+      let event = response.body.data[i];
       console.log(event);
-      /*multi.hmset(event.uid, {
+      multi.hmset(event.uid, {
         "uid": event.uid,
         "event_location": event.event_location || 0,
         "event_start_time": event.event_start_time,
@@ -725,7 +725,7 @@ router.get('/events', function (req, res, next) {
         "event_type": event.event_type,
         "location_name": event.location_name
 
-      }, redis.print);*/
+      }, redis.print);
     }
     multi.exec(function (err, replies) {
       console.log(replies); // 101, 2
