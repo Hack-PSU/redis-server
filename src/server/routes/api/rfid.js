@@ -796,6 +796,20 @@ router.get('/items', helpers.ensureScannerAuthenticated, function (req, res, nex
       length: response.body.data.length,
       message: 'Found active locations.'
     });
+    let multi = redis.multi();
+    for(let i=0; i < response.body.data.length; i++){
+      let event = response.body.data[i];
+      console.log(event);
+      let key = "item-" + event.uid;
+      multi.hmset(key, {
+        "uid": event.uid,
+        "name": event.name || "NULL",
+        "quantity": event.quantity || 0
+        }, redis.print);
+    }
+    multi.exec(function (err, replies) {
+      console.log(replies); // 101, 2
+    });
   }).catch(function (err) {
     // Something bad happened, handle the error
     console.log(err);
