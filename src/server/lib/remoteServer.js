@@ -19,12 +19,12 @@ console.log(server);
 //get Server
 async function getToken(){
   firebase.initializeApp({
-    apiKey: 'AIzaSyCpvAPdiIcqKV_NTyt6DZgDUNyjmA6kwzU',
-    authDomain: 'hackpsu18.firebaseapp.com',
-    databaseURL: 'https://hackpsu18.firebaseio.com',
-    projectId: 'hackpsu18',
-    storageBucket: 'hackpsu18.appspot.com',
-    messagingSenderId: '1002677206617',
+    apiKey: process.env.APIKEY,
+    authDomain: process.env.AUTHDOMAIN,
+    databaseURL: process.env.DATABASEURL,
+    projectId: process.env.PROJECTID,
+    storageBucket: process.env.STORAGEBUCKET,
+    messagingSenderId: process.env.MESSAGINGSENDERID,
   });
   await firebase.auth().signInWithEmailAndPassword(process.env.API_EMAIL, process.env.API_PASS);
   let idToken = await firebase.auth().currentUser.getIdToken(true);
