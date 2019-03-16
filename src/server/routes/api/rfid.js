@@ -8,7 +8,9 @@ let helpers = require('../../lib/helpers');
 let redis = require('../../lib/redis').redis;
 const {promisify} = require('util');
 const redisAsyncGetAll = promisify(redis.hgetall).bind(redis);
-
+const redisAsyncExists = promisify(redis.exists).bind(redis);
+const redisAsyncIncrement = promisify(redis.HINCRBY).bind(redis);
+const redisAsyncSet = promisify(redis.hmset).bind(redis);
 let redisIsConnected = require('../../lib/redis').redisIsConnected;
 let request = require("request-promise-native");
 
@@ -782,11 +784,9 @@ router.get('/events', function (req, res, next) {
  */
 router.get('/items', helpers.ensureScannerAuthenticated, function (req, res, next) {
 
-  let timestamp = Date.now();
   let options = helpers.clone(serverOpt);
   let uri = options.uri;
   options.uri = uri + '/admin/checkout/items';
-  options.qs = {filter: true};
   request(options).then(function (response) {
     //empty list of unsent scans
     console.dir("SUCCESS: " + JSON.stringify(response));
@@ -823,6 +823,108 @@ router.get('/items', helpers.ensureScannerAuthenticated, function (req, res, nex
 
 
 });
+
+
+/**
+ * @api {post} /rfid/checkout Get all Active Locations
+ * @apiVersion 2.2.0
+ * @apiName CheckoutItem
+ * @apiGroup RFID
+ * @apiPermission Scanner
+ *
+ * @apiSuccess {String} status    Status of response.
+ * @apiSuccess {Number} length    Length of active locations returned
+ * @apiSuccess {Array} locations  Array of currently active locations
+ * @apiSuccess {String} message   Response message.
+ * @apiSuccessExample {json} Success Response:
+ *   HTTP/1.1 200 OK
+ *   {
+      "api_response": "Success",
+      "status": 200,
+      "body": {
+          "data": [
+              {
+                "uid": "00f4f6f0b02747fe86a0f239ed7ea08e",
+                "event_location": 1,
+                "event_start_time": 1550969885214,
+                "event_end_time": 1550969885214,
+                "event_title": "abcde",
+                "event_description": "abcd",
+                "event_type": "workshop",
+                "hackathon": "84ed52ff52f84591aabe151666fae240",
+                "location_name": "124 Business Building"
+              },
+              {...}
+          ],
+          "result": "Success"
+      }
+    }
+ *
+ */
+router.post('/checkout', helpers.ensureScannerAuthenticated, asyncMiddleware(async function (req, res, next) {
+  if(!req.body || !req.body.itemId || !req.body.wid){
+    console.error("Invalid values passed for itemId or wid");
+    let err = new Error("Invalid values passed for itemId or wid");
+    err.status = 401;
+    return next(err);
+  }
+
+  let itemId = parseInt(req.body.itemId, 10);
+  let wid = req.body.wid;
+
+  //setup sending to server asynchronously
+  let scan = {
+    "wid": wid.toString(),
+    "itemId": itemId
+  };
+  let options = helpers.clone(serverOpt);
+  let uri = options.uri;
+  options.uri = uri + '/admin/checkout';
+  options.body = scan;
+  options.method = 'POST';
+
+  if(!redisIsConnected()){
+    return res.status(500)
+      .json({
+        status: 'error',
+        message: 'Redis database is down'
+      });
+  }
+  if((await redisAsyncExists(wid)) !== 0){
+    let item = await redisAsyncGetAll("item-" + itemId);
+    if (item ||  item.quantity > 0) {
+      let user = await redisAsyncGetAll(wid);
+      let data = {};
+      let itemCount = parseInt(user[item.name], 10) || 0;
+      data[item.name] = itemCount + 1;
+      redisAsyncSet(wid, data);
+      redisAsyncIncrement("item-" + itemId, "quantity", -1);
+      res.status(200).json({
+        status: 'success',
+        message: 'Allowed to checkout.'
+      });
+    }else{
+      console.error("Invalid values passed for itemId or not enough items left");
+      let err = new Error("Cannot checkout that item");
+      err.status = 403;
+      return next(err);
+    }
+
+
+  }
+  request(options).then(function (response) {
+    //empty list of unsent scans
+    console.dir("SUCCESS: " + JSON.stringify(response));
+
+  }).catch(function (err) {
+    // Something bad happened, handle the error
+    console.log(err);
+
+    //do not remove unsent scans
+  });
+
+
+}));
 
 
 
