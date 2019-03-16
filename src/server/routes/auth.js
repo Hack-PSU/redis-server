@@ -167,7 +167,6 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
     if (err) {
       return next(err);
     } else {
-      //console.log(scanners);
       let allScanners = scanners;
       return res.render('scanners', {data: allScanners, moment: moment, user: req.user});
     }
@@ -299,14 +298,12 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
   options.uri = uri + '/scanner/registrations';
   try{
     let response = await request(options);
-    //console.log("NEW SERVER RESPONSE: " + JSON.stringify(response));
     // Request was successful, use the response object at will
     //do redis stuff then
     let numErrors = 0;
     let promises = [];
     //code to build promises to run
     response.body.data.map(function (element) {
-      //console.log(element.rfid_uid);
       promises.push(new Promise(function (resolve, reject) {
           redis.hmset(element.pin, {
             "uid": element.uid,
@@ -325,7 +322,6 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
               console.log("ERROR inserting into db: " + err);
               reject();
             } else {
-              //console.log("Successfully opened tab with info!");
               resolve();
             }
           });
@@ -339,7 +335,6 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
     options.qs = {filter: false};
     response = await request(options);
     response.body.data.map(function (element) {
-      //console.log(element.rfid_uid);
       promises.push(new Promise(function (resolve, reject) {
           redis.hmset(element.uid, {
             "uid": element.uid,
@@ -359,7 +354,6 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
               console.log("ERROR inserting into db: " + err);
               reject();
             } else {
-              //console.log("Successfully opened tab with info!");
               resolve();
             }
           });
@@ -482,7 +476,6 @@ router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
                 console.log("ERROR inserting into db: " + err);
                 resolve();
               } else {
-                //console.log("Successfully opened tab with info!");
                 resolve();
               }
             });
@@ -722,11 +715,7 @@ router.get('/scanner/removeall', helpers.ensureAdminJSON, function (req, res, ne
   });
 });
 
-/*
-Model.remove({}, function(err) {
-   console.log('collection removed')
-});
- */
+
 
 let cursor = '0';
 
