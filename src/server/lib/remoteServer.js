@@ -49,17 +49,7 @@ async function getToken(){
 
 }
 
-/*
-firebase.auth().signInWithEmailAndPassword(process.env.API_EMAIL, process.env.API_PASS)
-  .then(() => {
-    firebase.auth().currentUser.getIdToken(true)
-      .then((idtoken) => {
-        console.log(idtoken);
-      })
-      .catch(err => console.error(err));
-  }).catch(err => console.error(err));
-*/
-//TODO: make sure this only resolves once for every file (no multiple apikeys)
+
 module.exports = (async function(){
   //some async initializers
   //e.g. await the db module that has the same structure like this
@@ -79,15 +69,5 @@ module.exports = (async function(){
   //resolve the export promise
   return serverOptions;
 })();
-//test
-/*
-request(options)
-    .then(function (response) {
-        // Request was successful, use the response object at will
-        console.log(response);
-    })
-    .catch(function (err) {
-        // Something bad happened, handle the error
-        console.log(err);
-    });*/
+
 
