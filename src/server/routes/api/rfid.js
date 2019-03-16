@@ -716,7 +716,6 @@ router.get('/events', function (req, res, next) {
     let multi = redis.multi();
     for(let i=0; i < response.body.data.length; i++){
       let event = response.body.data[i];
-      console.log(event);
       multi.hmset(event.uid, {
         "uid": event.uid,
         "event_location": event.event_location || 0,
@@ -730,7 +729,6 @@ router.get('/events', function (req, res, next) {
       }, redis.print);
     }
     multi.exec(function (err, replies) {
-      console.log(replies); // 101, 2
     });
   })).catch(function (err) {
     // Something bad happened, handle the error
@@ -799,7 +797,6 @@ router.get('/items', helpers.ensureScannerAuthenticated, function (req, res, nex
     let multi = redis.multi();
     for(let i=0; i < response.body.data.length; i++){
       let event = response.body.data[i];
-      console.log(event);
       let key = "item-" + event.uid;
       multi.hmset(key, {
         "uid": event.uid,
