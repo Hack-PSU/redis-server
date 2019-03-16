@@ -115,7 +115,7 @@ router.post('/assign', helpers.ensureScannerAuthenticated, function (req, res, n
   if(!req.body || !req.body.wid || !req.body.pin){
     console.error("Invalid values passed for wristband id or pin");
     let err = new Error("Invalid values passed for wid or pin.");
-    err.status = 401;
+    err.status = 400;
     return next(err);
   }
   let userRFID = req.body.wid;
@@ -280,7 +280,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
   if(!req.body || !req.body.pin){
     console.error("Invalid values passed for pin");
     let err = new Error("Invalid values passed for pin");
-    err.status = 401;
+    err.status = 400;
     return next(err);
   }
   let pin = parseInt(req.body.pin, 10);
@@ -390,7 +390,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, asyncMiddleware( async 
   if(!req.body || !req.body.location || !req.body.wid){
     console.error("Invalid values passed for location or id");
     let err = new Error("Invalid values passed for location or wid");
-    err.status = 401;
+    err.status = 400;
     return next(err);
   }
 
@@ -617,7 +617,7 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
   if(!req.query || !req.query.wid){
     console.error("Invalid values passed for wristband id.");
     let err = new Error("Invalid values passed for wristband id.");
-    err.status = 401;
+    err.status = 400;
     return next(err);
   }
   let userRFID = req.query.wid;
@@ -865,7 +865,7 @@ router.post('/checkout', helpers.ensureScannerAuthenticated, asyncMiddleware(asy
   if(!req.body || !req.body.itemId || !req.body.wid){
     console.error("Invalid values passed for itemId or wid");
     let err = new Error("Invalid values passed for itemId or wid");
-    err.status = 401;
+    err.status = 400;
     return next(err);
   }
 
@@ -918,7 +918,7 @@ router.post('/checkout', helpers.ensureScannerAuthenticated, asyncMiddleware(asy
 
   }).catch(function (err) {
     // Something bad happened, handle the error
-    console.log(err);
+    console.error(err);
 
     //do not remove unsent scans
   });
