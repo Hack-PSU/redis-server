@@ -705,9 +705,18 @@ router.get('/events', function (req, res, next) {
   request(options).then(asyncMiddleware(async function (response) {
     //empty list of unsent scans
     console.dir("SUCCESS: " + JSON.stringify(response));
+    let data = [];
+    for(let i=0; i < response.body.data.length; i++){
+      let element = response.body.data[i];
+      delete element.event_description;
+      delete element.event_location;
+      delete element.location_name;
+      delete element.hackathon;
+      data.push(element);
+    }
     res.status(200).json({
       status: 'success',
-      locations: response.body.data,
+      locations: data,
       length: response.body.data.length,
       message: 'Found active locations.'
     });
