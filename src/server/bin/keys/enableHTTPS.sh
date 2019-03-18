@@ -1,5 +1,5 @@
 #!/bin/bash
-PASSPHRASE="change_me"
+PASSPHRASE="hackdaddy"
 if [[ ! -f key.pem || ! -f cert.pem ]] ;then
     # generate private key and enter pass phrase
     openssl genrsa -des3 -passout pass:${PASSPHRASE} -out key.pem 2048
@@ -21,12 +21,29 @@ if [[ ! -f key.pem || ! -f cert.pem ]] ;then
     # remove certain files
     rm server.csr
 fi
-# update passphrase to unlock files
-sed -i "" "s/SSL_KEY_PASS=.*/SSL_KEY_PASS=$PASSPHRASE/g" ../../../../.env
-# update .env flag to enable https
-sed -i "" 's/USE_HTTPS=false/USE_HTTPS=true/g' ../../../../.env
+
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)
+        sed -i "s/SSL_KEY_PASS=.*/SSL_KEY_PASS=$PASSPHRASE/g" ../../../../.env
+	sed -i "s/USE_HTTPS=false/USE_HTTPS=true/g" ../../../../.env
+        ;;
+
+    Darwin*)
+        # update passphrase to unlock files
+        sed -i "" "s/SSL_KEY_PASS=.*/SSL_KEY_PASS=$PASSPHRASE/g" ../../../../.env
+        # update .env flag to enable https
+        sed -i "" "s/USE_HTTPS=false/USE_HTTPS=true/g" ../../../../.env
+        ;;
+    *)
+            echo "Unknown platform." >&2
+            ;;
+esac
+
 
 echo "Enabled HTTPS!!"
 # get fingerprint
 echo "Save this fingerprint for verifying Redis identity on Scanners:"
 openssl x509 -noout -in cert.pem -fingerprint
+echo "Formatted for use in Scanners:"
+ openssl x509 -noout -in cert.pem -fingerprint | awk -F= '{print $2;}' | sed "s/:/, /g" | awk '{for (i = 1; i <= NF; i++) {printf "0x%s",$i ;} } END {printf "\n";}'

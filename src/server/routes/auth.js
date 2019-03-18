@@ -4,7 +4,11 @@ let moment = require('moment');
 let jwt = require('jsonwebtoken');
 let redis = require('../lib/redis').redis;
 let redisIsConnected = require('../lib/redis').redisIsConnected;
-let serverOptions = require('../lib/remoteServer');
+let serverOpt = null;
+let remoteServer = require('../lib/remoteServer').then(function (serverOptions) {
+  console.log("LOADED into AUTH: " + JSON.stringify(serverOptions));
+  serverOpt = serverOptions;
+});
 let request = require("request-promise-native");
 const uuidv4 = require('uuid/v4');
 let passport = require('../lib/auth');
@@ -163,7 +167,6 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
     if (err) {
       return next(err);
     } else {
-      //console.log(scanners);
       let allScanners = scanners;
       return res.render('scanners', {data: allScanners, moment: moment, user: req.user});
     }
@@ -290,7 +293,7 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
     });
     return res.redirect('/auth/profile');
   }
-  let options = helpers.clone(serverOptions);
+  let options = helpers.clone(serverOpt);
   let uri = options.uri;
   options.uri = uri + '/scanner/registrations';
   try{
@@ -300,8 +303,7 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
     let numErrors = 0;
     let promises = [];
     //code to build promises to run
-    response.map(function (element) {
-      //console.log(element.rfid_uid);
+    response.body.data.map(function (element) {
       promises.push(new Promise(function (resolve, reject) {
           redis.hmset(element.pin, {
             "uid": element.uid,
@@ -318,9 +320,8 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
               //todo: make queue to reinsert into db
               numErrors++;
               console.log("ERROR inserting into db: " + err);
-              resolve();
+              reject();
             } else {
-              //console.log("Successfully opened tab with info!");
               resolve();
             }
           });
@@ -328,7 +329,38 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
       );
 
     });
+    options = helpers.clone(serverOpt);
+    let uri = options.uri;
+    options.uri = uri + '/scanner/events';
+    options.qs = {filter: false};
+    response = await request(options);
+    response.body.data.map(function (element) {
+      promises.push(new Promise(function (resolve, reject) {
+          redis.hmset(element.uid, {
+            "uid": element.uid,
+            "event_location": element.event_location || 0,
+            "event_start_time": element.event_start_time,
+            "event_end_time": element.event_end_time,
+            "event_title": element.event_title || "NULL",
+            "event_description": element.event_description || "N/A",
+            "event_type": element.event_type,
+            "location_name": element.location_name
 
+          }, function (err, reply) {
+            // reply is null when the key is missing
+            if (err) {
+              //todo: make queue to reinsert into db
+              numErrors++;
+              console.log("ERROR inserting into db: " + err);
+              reject();
+            } else {
+              resolve();
+            }
+          });
+        })
+      );
+
+    });
     //run promises
     Promise.all(promises).then(function () {
       //return to homepage with success flash.
@@ -390,7 +422,7 @@ router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
     });
     return res.redirect('/auth/profile');
   }
-  let options = helpers.clone(serverOptions);
+  let options = helpers.clone(serverOpt);
   let uri = options.uri;
   options.uri = uri + '/scanner/registrations';
   request(options)
@@ -444,7 +476,6 @@ router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
                 console.log("ERROR inserting into db: " + err);
                 resolve();
               } else {
-                //console.log("Successfully opened tab with info!");
                 resolve();
               }
             });
@@ -684,11 +715,7 @@ router.get('/scanner/removeall', helpers.ensureAdminJSON, function (req, res, ne
   });
 });
 
-/*
-Model.remove({}, function(err) {
-   console.log('collection removed')
-});
- */
+
 
 let cursor = '0';
 
