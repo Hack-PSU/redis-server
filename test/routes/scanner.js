@@ -18,6 +18,8 @@ describe('INTEGRATION TEST: GET /auth/scanner/register', () => {
   let agent = chai.request.agent(app);
   let pin = 0;
   before( mochaAsync(async function (done){
+    let remoteServer = await require('../../src/server/lib/remoteServer');
+    console.log("LOADED: " + JSON.stringify(remoteServer));
     await agent.post('/auth/login').send({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASS });
     let res = await agent.post('/api/scanners/');
     console.log("AGENT BODY: " + JSON.stringify(res.body));
@@ -49,22 +51,23 @@ describe('INTEGRATION TEST: GET /auth/scanner/register', () => {
 describe('INTEGRATION TEST: GET /auth/updatedb', () => {
   let agent = chai.request.agent(app);
 
-  it('it should get login and update redis db', (done) => {
+  it('it should get login and update redis db', mochaAsync(async (done) => {
+    await require('../../src/server/lib/remoteServer');
     agent.post('/auth/login')
-      .send({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASS })
+      .send({email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASS})
       .then(function (res) {
         //res.should.have.cookie('sessionid');
         // The `agent` now has the sessionid cookie saved, and will send it
         // back to the server in the next request:
         return agent.get('/auth/updatedb')
           .then(function (res) {
-            console.log("AGENT BODY: " + res.body);
+            console.log("AGENT BODY: " + JSON.stringify(res.body));
             res.should.have.status(200);
             agent.close();
             done();
           });
       });
-  });
+  }));
 });
 
 //TODO: figure out how to reset redis to disassociate scans (maybe an after tag that unassociates them
@@ -127,7 +130,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
       "apikey": apikey
     };
     chai.request(app)
-      .post('/rfid/assignment')
+      .post('/rfid/assign')
       .send(body)
       .end((err, res) => {
         should.equal(err, null);
@@ -140,7 +143,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
   });
   it('it should get current active locations', (done) => {
     chai.request(app)
-      .get('/rfid/active-locations')
+      .get('/rfid/events')
       .end((err, res) => {
         should.equal(err, null);
         res.should.have.status(200);

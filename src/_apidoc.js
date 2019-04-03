@@ -71,6 +71,98 @@
       *     }
 */
 
+/**
+ * @api {post} /rfid/assignment Register Wristband ID to User
+ * @apiVersion 2.0.0
+ * @apiName Register Wristband
+ * @apiGroup RFID
+ * @apiDescription
+ * Register Wristband to User. Sends assignment to main server, while locally replacing user key to WID code.
+ * @apiPermission Scanner
+ *
+ * @apiParam {Number} wid  Wristband ID to set to user.
+ * @apiParam {Number} pin Pin of user to add wid code to.
+ * @apiParam {String} apikey API key for scanner to authenticate.
+ * @apiParamExample {json} Request Body Example
+ *      {
+ *          wid: "RFID1",
+ *          pin: 94,
+ *          apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *      }
+ *
+ * @apiSuccess {String} status  Status of response.
+ * @apiSuccess {Object} data    Response from Redis.
+ * @apiSuccess {String} message Response message.
+ *
+ * @apiSuccessExample {json} Success Response:
+ *    HTTP/1.1 200 OK
+ *    {
+ *      status: "success",
+ *      data: "OK",
+ *      message: "Created tab."
+ *    }
+ * @apiErrorExample {json} 401 Response
+ *     HTTP/1.1 401 Unauthorized
+ *     "Invalid values passed for wristband id or pin"
+ * @apiErrorExample {json} 404 Response
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       status: "error",
+ *       data: {'err...'},
+ *       message: "Invalid pin"
+ *     }
+ * @apiErrorExample {json} 409 Response
+ *     HTTP/1.1 409 Not Found
+ *     {
+ *       status: 'error',
+ *       data: {'Existing User data...'},
+ *       message: 'Wristband Tag already opened.'
+ *     }
+ */
+
+/**
+ * @api {get} /rfid/active-locations Get all Active Locations
+ * @apiVersion 2.0.0
+ * @apiName GetActiveLocations
+ * @apiGroup RFID
+ * @apiPermission Scanner
+ *
+ * @apiSuccess {String} status    Status of response.
+ * @apiSuccess {Number} length    Length of active locations returned
+ * @apiSuccess {Array} locations  Array of currently active locations
+ * @apiSuccess {String} message   Response message.
+ * @apiSuccessExample {json} Success Response:
+ *  HTTP/1.1 200 OK
+ *  {
+ *    status: 'success',
+ *    length: 5,
+ *    locations: [
+      {
+        "location_name": "Cybertorium",
+        "uid": 2
+      },
+      {
+        "location_name": "Atrium",
+        "uid": 5
+      },
+      {
+        "location_name": "Business Building Room 120",
+        "uid": 6
+      },
+      {
+        "location_name": "Atrium Staircase",
+        "uid": 11
+      },
+      {
+        "location_name": "Game room",
+        "uid": 15
+      }
+    ],
+    message: 'Found active locations.'
+   }
+ *
+ */
+
 
 // ------------------------------------------------------------------------------------------
 // v1.0.0
