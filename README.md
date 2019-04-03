@@ -1,6 +1,6 @@
 ## Node + Express + Redis
 
-
+[![Build Status](https://travis-ci.org/Hack-PSU/redis-server.svg?branch=master)](https://travis-ci.org/Hack-PSU/redis-server)
 
 This is a template for you to use on your Redis Caching Server. Follow the directions below to get started.
 
