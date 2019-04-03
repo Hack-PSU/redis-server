@@ -75,7 +75,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
   let apikey = "";
   //part of test data on redis
   let pin = 512;
-  let pinName = "Caitlin Sanders";
+  let pinName = "Alex Zharichenko";
   let wristbandID = "TEST_WID";
   let agent = chai.request.agent(app);
 
