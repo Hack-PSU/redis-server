@@ -230,13 +230,14 @@ router.get('/scanners', helpers.ensureAdmin, function (req, res) {
  *     }
  */
 router.post('/scanner/register', asyncMiddleware(async function (req, res, next) {
-  if (!req.body.pin) {
+  let pin = parseInt(req.body.pin, 10);
+  if (!pin) {
     console.error("Invalid pin passed");
     let err = new Error("Invalid pin passed");
     err.status = 401;
     return next(err);
   }
-  let scanner = await Scanner.findOne({ pin: req.body.pin }).exec();
+  let scanner = await Scanner.findOne({ pin: pin }).exec();
   if (process.env.NODE_ENV === "test" || (scanner && !scanner.isAssigned) ){
     console.log(JSON.stringify(req.headers));
     let macAddr = req.headers.macaddr;

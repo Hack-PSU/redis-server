@@ -100,7 +100,8 @@ let unsent_assignments = [];
  *     }
  */
 router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, res, next) {
-  if(!req.body || !req.body.wid || !req.body.pin){
+  let pin = parseInt(req.body.pin, 10);
+  if(!req.body || !req.body.wid || !pin){
     console.error("Invalid values passed for wristband id or pin");
     let err = new Error("Invalid values passed for wid or pin");
     err.status = 401;
@@ -108,7 +109,6 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
   }
   let userRFID = req.body.wid;
   //we know pin exists
-  let pin = parseInt(req.body.pin, 10);
 
   console.log("OPENING TAB WITH USER: " + userRFID);
   console.log("WE HAVE PIN: " + pin);
@@ -232,7 +232,7 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
 
 
 /**
- * @api {post} /rfid/getpin Get User with Pin
+ * @api {post} /rfid/getpin Get User Info with Pin
  * @apiVersion 2.0.0
  * @apiName GetPin
  * @apiGroup RFID
@@ -263,13 +263,13 @@ router.post('/assignment', helpers.ensureScannerAuthenticated, function (req, re
  *     }
  */
 router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, next) {
-  if(!req.body || !req.body.pin){
+  let pin = parseInt(req.body.pin, 10);
+  if(!req.body || !pin){
     console.error("Invalid values passed for pin");
     let err = new Error("Invalid values passed for pin");
     err.status = 401;
     return next(err);
   }
-  let pin = parseInt(req.body.pin, 10);
   console.log("PIN IS: " + pin);
     if(!redisIsConnected()){
       let err = new Error("Redis database is down");
@@ -295,7 +295,7 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
           .json({
             status: 'error',
             data: obj,
-            message: 'Did not find anything.'
+            message: 'Does not exist or already set.'
           });
 
       }
@@ -552,7 +552,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, function (req, res, nex
 
 
 /**
- * @api {post} /rfid/user-info Get User Info with WID tag
+ * @api {post} /rfid/user-info Get User Info with Wristband tag
  * @apiVersion 2.0.0
  * @apiName Get User
  * @apiGroup RFID
@@ -605,11 +605,11 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
   }
   redis.hgetall(userRFID, function (err, obj) {
     if (err) {
-      res.status(404)
+      res.status(500)
         .json({
           status: 'error',
           data: err,
-          message: 'Does not exist or already set.'
+          message: 'something went wrong'
         });
     } else {
       console.dir(obj);
