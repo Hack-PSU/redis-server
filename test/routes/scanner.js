@@ -71,7 +71,7 @@ describe('INTEGRATION TEST: GET /auth/updatedb', () => {
 });
 
 //TODO: figure out how to reset redis to disassociate scans (maybe an after tag that unassociates them
-describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
+describe('INTEGRATION TEST: ALL /scanner/ routes', () => {
   let apikey = "";
   //part of test data on redis
   let pin = 512;
@@ -112,7 +112,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
       "apikey": apikey
     };
     chai.request(app)
-      .post('/rfid/getpin')
+      .post('/scanner/getpin')
       .send(body)
       .end((err, res) => {
         should.equal(err, null);
@@ -130,7 +130,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
       "apikey": apikey
     };
     chai.request(app)
-      .post('/rfid/assign')
+      .post('/scanner/assign')
       .send(body)
       .end((err, res) => {
         should.equal(err, null);
@@ -143,7 +143,7 @@ describe('INTEGRATION TEST: ALL /rfid/ routes', () => {
   });
   it('it should get current active locations', (done) => {
     chai.request(app)
-      .get('/rfid/events')
+      .get('/scanner/events')
       .end((err, res) => {
         should.equal(err, null);
         res.should.have.status(200);

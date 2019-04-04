@@ -62,10 +62,10 @@ let unsent_assignments = [];
 //all functions with "requireAuth" used to have helpers.ensureAuthenticated
 //TODO: make this support array's of assignments recieived check the param example in doc
 /**
- * @api {post} /rfid/assign Register Wristband ID to User
- * @apiVersion 2.2.0
+ * @api {post} /scanner/assign Register Wristband ID to User
+ * @apiVersion 2.3.0
  * @apiName Register Wristband
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Register Wristband to User. Sends assignment to main server, while locally replacing user key to WID code.
  * @apiPermission Scanner
@@ -246,10 +246,10 @@ router.post('/assign', helpers.ensureScannerAuthenticated, function (req, res, n
 
 
 /**
- * @api {post} /rfid/getpin Get User Info with Pin
- * @apiVersion 2.0.0
+ * @api {post} /scanner/getpin Get User Info with Pin
+ * @apiVersion 2.3.0
  * @apiName GetPin
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Get all user information from redis that hasn't been assigned an WID tag.
  * Pin is used to currently index user in redis if WID hasn't been set.
@@ -320,10 +320,10 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
 
 //DOC: increment counter to tab of wid: https://redis.io/commands/hincrby
 /**
- * @api {post} /rfid/scan Add User Scan
- * @apiVersion 2.0.0
+ * @api {post} /scanner/scan Add User Scan
+ * @apiVersion 2.3.0
  * @apiName ScanData
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Store and log scan location, wid tag and timestamp. Verify if user is allowed to enter, and send response back.
  * Redis will also send the scan data to the main server asynchronously. Scanners will not find out if those requests will succeed or fail.
@@ -577,10 +577,10 @@ router.post('/scan', helpers.ensureScannerAuthenticated, asyncMiddleware( async 
 
 
 /**
- * @api {post} /rfid/user-info Get User Info with Wristband tag
- * @apiVersion 2.0.0
+ * @api {post} /scanner/user-info Get User Info with Wristband tag
+ * @apiVersion 2.3.0
  * @apiName Get User
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Get all user information from redis for an WID tag if it has been assigned.
  * WID is used to index user in redis after user has been setup.
@@ -660,10 +660,10 @@ router.get('/user-info', helpers.ensureScannerAuthenticated, function (req, res,
 });
 
 /**
- * @api {get} /rfid/events Get all Active Locations
- * @apiVersion 2.1.0
+ * @api {get} /scanner/events Get all Active Events
+ * @apiVersion 2.3.0
  * @apiName GetActiveLocations
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiPermission Scanner
  *
  * @apiSuccess {String} status    Status of response.
@@ -754,39 +754,33 @@ router.get('/events', function (req, res, next) {
 });
 
 /**
- * @api {get} /rfid/items Get all Active Locations
- * @apiVersion 2.2.0
+ * @api {get} /scanner/items Get all Available Items
+ * @apiVersion 2.3.0
  * @apiName GetItems
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiPermission Scanner
  *
+ * @apiParam {String} apikey  API key for scanner to authenticate.
+ *
  * @apiSuccess {String} status    Status of response.
- * @apiSuccess {Number} length    Length of active locations returned
- * @apiSuccess {Array} locations  Array of currently active locations
+ * @apiSuccess {Number} length    Length of available returned
+ * @apiSuccess {Array} items  Array of currently available items
  * @apiSuccess {String} message   Response message.
  * @apiSuccessExample {json} Success Response:
  *   HTTP/1.1 200 OK
- *   {
-      "api_response": "Success",
-      "status": 200,
-      "body": {
-          "data": [
-              {
-                "uid": "00f4f6f0b02747fe86a0f239ed7ea08e",
-                "event_location": 1,
-                "event_start_time": 1550969885214,
-                "event_end_time": 1550969885214,
-                "event_title": "abcde",
-                "event_description": "abcd",
-                "event_type": "workshop",
-                "hackathon": "84ed52ff52f84591aabe151666fae240",
-                "location_name": "124 Business Building"
-              },
-              {...}
-          ],
-          "result": "Success"
-      }
-    }
+ * {
+ *     "status": "Success",
+ *     "items": [
+ *       {
+ *         "uid": 1,
+ *         "name": "Mattresses",
+ *         "quantity": 50,
+ *       },
+ *         {...}
+ *     ],
+ *     "length": 2,
+ *     "message": "Found active locations."
+ * }
  *
  */
 router.get('/items', helpers.ensureScannerAuthenticated, function (req, res, next) {
@@ -832,38 +826,31 @@ router.get('/items', helpers.ensureScannerAuthenticated, function (req, res, nex
 
 
 /**
- * @api {post} /rfid/checkout Get all Active Locations
- * @apiVersion 2.2.0
+ * @api {post} /scanner/checkout Checkout item for User
+ * @apiVersion 2.3.0
  * @apiName CheckoutItem
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiPermission Scanner
+ * @apiDescription
+ * Checkout an item for a user which they will have to return later. Used to keep running total of who checked out what.
+ *
+ * @apiParam {Number} itemId  ID of item user is checking out.
+ * @apiParam {String} wid     User's Wristband ID to identify who they are.
+ * @apiParam {String} apikey  API key for scanner to authenticate.
+ * @apiParamExample {json} Request Body Example
+ *     {
+ *       wid: "1695694065",
+ *       itemId: 1
+ *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
+ *     }
  *
  * @apiSuccess {String} status    Status of response.
- * @apiSuccess {Number} length    Length of active locations returned
- * @apiSuccess {Array} locations  Array of currently active locations
  * @apiSuccess {String} message   Response message.
  * @apiSuccessExample {json} Success Response:
  *   HTTP/1.1 200 OK
  *   {
-      "api_response": "Success",
-      "status": 200,
-      "body": {
-          "data": [
-              {
-                "uid": "00f4f6f0b02747fe86a0f239ed7ea08e",
-                "event_location": 1,
-                "event_start_time": 1550969885214,
-                "event_end_time": 1550969885214,
-                "event_title": "abcde",
-                "event_description": "abcd",
-                "event_type": "workshop",
-                "hackathon": "84ed52ff52f84591aabe151666fae240",
-                "location_name": "124 Business Building"
-              },
-              {...}
-          ],
-          "result": "Success"
-      }
+      "status": "success",
+      "message": "Allowed to checkout."
     }
  *
  */
