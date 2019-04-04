@@ -29,7 +29,7 @@
  * @api {post} /rfid/assign Register Wristband ID to User
  * @apiVersion 2.2.0
  * @apiName Register Wristband
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Register Wristband to User. Sends assignment to main server, while locally replacing user key to WID code.
  * @apiPermission Scanner
@@ -80,7 +80,7 @@
  * @api {post} /rfid/getpin Get User Info with Pin
  * @apiVersion 2.0.0
  * @apiName GetPin
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Get all user information from redis that hasn't been assigned an WID tag.
  * Pin is used to currently index user in redis if WID hasn't been set.
@@ -112,7 +112,7 @@
  * @api {post} /rfid/scan Add User Scan
  * @apiVersion 2.0.0
  * @apiName ScanData
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Store and log scan location, wid tag and timestamp. Verify if user is allowed to enter, and send response back.
  * Redis will also send the scan data to the main server asynchronously. Scanners will not find out if those requests will succeed or fail.
@@ -180,7 +180,7 @@
  * @api {post} /rfid/user-info Get User Info with Wristband tag
  * @apiVersion 2.0.0
  * @apiName Get User
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Get all user information from redis for an WID tag if it has been assigned.
  * WID is used to index user in redis after user has been setup.
@@ -218,7 +218,7 @@
  * @api {get} /rfid/events Get all Active Events
  * @apiVersion 2.1.0
  * @apiName GetActiveLocations
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiPermission Scanner
  *
  * @apiSuccess {String} status    Status of response.
@@ -255,7 +255,7 @@
  * @api {get} /rfid/items Get all Available Items
  * @apiVersion 2.2.0
  * @apiName GetItems
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiPermission Scanner
  *
  * @apiParam {String} apikey  API key for scanner to authenticate.
@@ -286,7 +286,7 @@
  * @api {post} /rfid/checkout Checkout item for User
  * @apiVersion 2.2.0
  * @apiName CheckoutItem
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiPermission Scanner
  * @apiDescription
  * Checkout an item for a user which they will have to return later. Used to keep running total of who checked out what.
@@ -364,7 +364,7 @@
  * @api {post} /rfid/assignment Register Wristband ID to User
  * @apiVersion 2.0.0
  * @apiName Register Wristband
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Register Wristband to User. Sends assignment to main server, while locally replacing user key to WID code.
  * @apiPermission Scanner
@@ -413,7 +413,7 @@
  * @api {get} /rfid/active-locations Get all Active Locations
  * @apiVersion 2.0.0
  * @apiName GetActiveLocations
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiPermission Scanner
  *
  * @apiSuccess {String} status    Status of response.
@@ -490,7 +490,7 @@
  * @api {post} /tabs/setup Register RFID Band to User
  * @apiVersion 1.0.0
  * @apiName Register Wristband
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Register RFID Band to User. Sends assignment to main server, while locally replacing user key to RFID code.
  * @apiPermission Scanner
@@ -539,7 +539,7 @@
  * @api {post} /tabs/getpin Get User with Pin
  * @apiVersion 1.0.0
  * @apiName GetPin
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Get all user information from redis that hasn't been assigned an rfid tag.
  * Pin is used to currently index user in redis if rfid hasn't been set.
@@ -571,7 +571,7 @@
  * @api {post} /tabs/add Add User Scan
  * @apiVersion 1.0.0
  * @apiName ScanData
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Store and log scan location, rfid tag and timestamp. Verify if user is allowed to enter, and send response back.
  * Redis will also send the scan data to the main server asynchronously. Scanners will not find out if those requests will succeed or fail.
@@ -639,7 +639,7 @@
  * @api {post} /tabs/user-info Get User with RFID tag
  * @apiVersion 1.0.0
  * @apiName Get User
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiDescription
  * Get all user information from redis for an RFID tag if it has been assigned.
  * RFID is used to index user in redis after user has been setup.
@@ -677,7 +677,7 @@
  * @api {get} /tabs/active-locations Get all Active Locations
  * @apiVersion 1.0.0
  * @apiName GetActiveLocations
- * @apiGroup RFID
+ * @apiGroup Scanner
  * @apiPermission Scanner
  *
  * @apiSuccess {String} status    Status of response.
