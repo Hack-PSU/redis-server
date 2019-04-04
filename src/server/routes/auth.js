@@ -269,6 +269,95 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
 
 }));
 
+
+/**
+ * @api {post} /auth/scanner/verify Verify Scanner
+ * @apiVersion 2.3.0
+ * @apiName VerifyScanner
+ * @apiGroup Admin
+ * @apiDescription
+ * Verify if the api key passed in is valid or not. If it isn't valid, it will return isValid=false, if it is, it will be true.
+ * If apikey is close to expiring (within 2 hours), it will extend its lifespan for 3 more days.
+ * @apiParam {String} apikey   API key that we want to validate is valid.
+ * @apiParamExample {json} Request Body Example
+ *     {
+ *       "apikey": "c82532d1-e221-4977-9901-d6ac5eb91e4e"
+ *     }
+ *
+ * @apiSuccess {String} status            Status of response.
+ * @apiSuccess {Object} data              User tab information.
+ * @apiSuccess {Boolean} data.isValid     Boolean saying if apikey is valid or not
+ * @apiSuccess {String} data.time         Current epoch time in milliseconds
+ * @apiSuccess {String} message           Response Message.
+ *
+ * @apiSuccessExample {json} Success-Response Valid Key:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       status: "success",
+ *       data: {
+ *         isValid: true,
+ *         time: 1554400174029
+ *       },
+ *       message: "API Key data."
+ *     }
+ * @apiSuccessExample {json} Success-Response Invalid Key:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       status: "success",
+ *       data: {
+ *         isValid: false,
+ *         time: 1554400175029
+ *       },
+ *       message: "API Key data."
+ *     }
+ * @apiErrorExample {json} 401 Response
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *        "status": "error",
+ *        "message": "No api key passed.",
+ *        "error": {
+ *            "status": 401
+ *        }
+ *     }
+ * @apiErrorExample {json} 500 Response
+ *     HTTP/1.1 500 Server Error
+ *     {
+ *       status: "error",
+ *       data: {err},
+ *       message: "There was an error."
+ *     }
+ */
+router.post('/scanner/verify', asyncMiddleware(async function (req, res, next) {
+  let apikey = req.body.apikey;
+  if (!apikey) {
+    console.error("No API key passed");
+    let err = new Error("No API key passed");
+    err.status = 401;
+    return next(err);
+  }
+  let scanner = await Scanner.findOne({ apikey: apikey }).exec();
+  let valid = false;
+  if (scanner && scanner.isAssigned){
+    if(moment().add(2,'hours').isAfter(scanner.expireAt)){
+      scanner.expireAt = moment(scanner.expireAt).add(3, 'days');
+    }
+    let saveRes = await scanner.save();
+    valid = true;
+  }else{
+    console.log("Invalid or expired apikey: " + scanner);
+  }
+  return res.status(200).json({
+    status: "success",
+    data: {
+      isValid : valid,
+      time: new Date().getTime()
+    },
+    message: "API Key data."
+  });
+
+
+}));
+
 /**
  * @api {get} /auth/updatedb Update Redis DB
  * @apiVersion 2.0.0
