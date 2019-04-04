@@ -14,6 +14,69 @@ let mochaAsync = (fn) => {
   };
 };
 
+describe('INTEGRATION TEST: GET /auth/scanner/verify', () => {
+  let agent = chai.request.agent(app);
+  let apikey = "";
+  before( mochaAsync(async function (done){
+    let remoteServer = await require('../../src/server/lib/remoteServer');
+    console.log("LOADED: " + JSON.stringify(remoteServer));
+    await agent.post('/auth/login').send({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASS });
+    let res = await agent.post('/api/scanners/');
+    agent.close();
+    console.log("AGENT BODY: " + JSON.stringify(res.body));
+    res.should.have.status(200);
+    res.body.should.contain.keys(["status", "data", "message"]);
+    res.body.data.should.contain.keys(["pin", "name"]);
+    let apiPin = res.body.data.pin;
+
+    let body = {
+      "pin": apiPin
+    };
+    let scannerRes = await chai.request(app).post('/auth/scanner/register').send(body);
+    scannerRes.should.have.status(200);
+    scannerRes.body.should.contain.keys(["status", "data", "message"]);
+    scannerRes.body.status.should.be.equal("success");
+    apikey = scannerRes.body.data.apikey;
+
+  }));
+  it('it should show that this apikey is valid', (done) => {
+    let body = {
+      "apikey": apikey
+    };
+    chai.request(app)
+      .post('/auth/scanner/verify')
+      .send(body)
+      .end((err, res) => {
+        should.equal(err, null);
+        res.should.have.status(200);
+        res.body.should.contain.keys(["status", "data", "message"]);
+        res.body.status.should.be.equal("success");
+        res.body.data.should.contain.keys(["isValid", "time"]);
+        res.body.data.isValid.should.be.equal(true);
+        //console.log(res.body);
+        done();
+      });
+  });
+  it('it should show that this apikey is invalid', (done) => {
+    let body = {
+      "apikey": "badkey"
+    };
+    chai.request(app)
+      .post('/auth/scanner/verify')
+      .send(body)
+      .end((err, res) => {
+        should.equal(err, null);
+        res.should.have.status(200);
+        res.body.should.contain.keys(["status", "data", "message"]);
+        res.body.status.should.be.equal("success");
+        res.body.data.should.contain.keys(["isValid", "time"]);
+        res.body.data.isValid.should.be.equal(false);
+        //console.log(res.body);
+        done();
+      });
+  });
+});
+
 describe('INTEGRATION TEST: GET /auth/scanner/register', () => {
   let agent = chai.request.agent(app);
   let pin = 0;
