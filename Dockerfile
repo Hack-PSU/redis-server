@@ -1,4 +1,4 @@
-FROM node:latest
+FROM node:10
 MAINTAINER Pranav Jain "pranajain@gmail.com"
 
 # Create app directory
