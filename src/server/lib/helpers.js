@@ -7,7 +7,7 @@ function ensureAuthenticated(req, res, next) {
   res.redirect('/auth/login');
 }
 
-let ensureScannerAuthenticated = passport.authenticate('scanner-api', {session: false});
+let ensureScannerAuthenticated = passport.authenticate('scanner-api', { session: false });
 
 function ensureAdmin(req, res, next) {
   if (req.isAuthenticated() && req.user.admin) {

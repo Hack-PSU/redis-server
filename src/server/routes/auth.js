@@ -38,7 +38,7 @@ router.get('/register', function (req, res, next) {
   });*/
 });
 
-//Register Users on website
+// Register Users on website
 router.post('/register', function (req, res, next) {
   let newUser = new User(req.body);
   newUser.generateHash(req.body.password, function (err, hash) {
@@ -241,7 +241,7 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     return next(err);
   }
   let scanner = await Scanner.findOne({ pin: pin }).exec();
-  if (process.env.NODE_ENV === "test" || (scanner && !scanner.isAssigned) ){
+  if (process.env.NODE_ENV === "test" || (scanner && !scanner.isAssigned)) {
     console.log(JSON.stringify(req.headers));
     let macAddr = req.headers.macaddr;
     if(macAddr){
@@ -249,17 +249,17 @@ router.post('/scanner/register', asyncMiddleware(async function (req, res, next)
     }
     scanner.expireAt = moment().add(3, 'days');
     scanner.isAssigned = true;
-    let saveRes = await scanner.save();
+    await scanner.save();
     return res.status(200).json({
       status: "success",
       data: scanner,
       message: "Scanner Added. API Key Generated."
     });
-  }else{
+  } else {
     console.error("Invalid or expired pin passed.");
     let err = new Error("Invalid or expired pin passed.");
     err.status = 401;
-    //remove existing scanner
+    // remove existing scanner
     let docs = await Scanner.find({ isAssigned:false }).sort({initTime: 'descending'}).limit(1).deleteOne().exec();
     console.log(docs);
     return next(err);
@@ -341,9 +341,9 @@ router.post('/scanner/verify', asyncMiddleware(async function (req, res, next) {
     if(moment().add(2,'hours').isAfter(scanner.expireAt)){
       scanner.expireAt = moment(scanner.expireAt).add(3, 'days');
     }
-    let saveRes = await scanner.save();
+    await scanner.save();
     valid = true;
-  }else{
+  } else {
     console.log("Invalid or expired apikey: " + scanner);
   }
   return res.status(200).json({
@@ -389,10 +389,10 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
   try{
     let response = await request(options);
     // Request was successful, use the response object at will
-    //do redis stuff then
+    // do redis stuff then
     let numErrors = 0;
     let promises = [];
-    //code to build promises to run
+    // code to build promises to run
     response.body.data.map(function (element) {
       promises.push(new Promise(function (resolve, reject) {
           redis.hmset(element.pin, {
@@ -461,7 +461,6 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
           status: 'danger',
           value: 'Some inserts into redis failed.'
         });
-        return res.redirect('/auth/profile');
       } else {
         //success
         console.log("REDIRECTED TO SUCC");
@@ -469,10 +468,10 @@ router.get('/updatedb', helpers.ensureAdminJSON, asyncMiddleware(async function 
           status: 'success',
           value: 'Successfully added all users to redis.'
         });
-        return res.redirect('/auth/profile');
       }
+      return res.redirect('/auth/profile');
     });
-  }catch(err){
+  } catch(err) {
     // Something bad happened, handle the error
     console.log(err);
     req.flash('message', {
@@ -547,7 +546,7 @@ router.get('/reloaddb', helpers.ensureAdminJSON, function (req, res, next) {
               }
             });
           }));
-        }else{
+        } else {
           promises.push(new Promise(function (resolve, reject) {
             //REMINDER: RFID's set like this will have no scan data for it. DO NOT RESET REDIS WHEN DOING LUNCH.
             redis.hmset(element.rfid_uid, {
@@ -676,55 +675,55 @@ router.get('/resetcounter', helpers.ensureAdminJSON, function (req, res, next) {
   });
 });
 
-//DOC: Used to reset the food counter when needed for next food event
-router.get('/mobile/resetcounter', requireAuth, function (req, res, next) {
+// //DOC: Used to reset the food counter when needed for next food event
+// router.get('/mobile/resetcounter', requireAuth, function (req, res, next) {
 
-  //this is the index number of the item we would like to remove from the tab
-  if (!redisIsConnected()) {
-    return res.status(500)
-      .json({
-        status: 'error',
-        message: 'Redis database is down.'
-      });
-  }
-  let data = [];
-  scan('*', data, function (keys) {
-    //great
-    //redis.batch().exec();
-    //build 2d array of commands
-    //['hset', 'key(rfid)', 'counter', '0']
-    let commands = [];
-    for (let i = 0; i < keys.length; i++) {
-      let command = ["hset", "", "counter", "0"];
-      command[1] = keys[i];
-      commands.push(command);
-    }
+//   //this is the index number of the item we would like to remove from the tab
+//   if (!redisIsConnected()) {
+//     return res.status(500)
+//       .json({
+//         status: 'error',
+//         message: 'Redis database is down.'
+//       });
+//   }
+//   let data = [];
+//   scan('*', data, function (keys) {
+//     //great
+//     //redis.batch().exec();
+//     //build 2d array of commands
+//     //['hset', 'key(rfid)', 'counter', '0']
+//     let commands = [];
+//     for (let i = 0; i < keys.length; i++) {
+//       let command = ["hset", "", "counter", "0"];
+//       command[1] = keys[i];
+//       commands.push(command);
+//     }
 
-    //pass in and run the commands
-    redis.batch(commands)
-      .exec(function (err, replies) {
-        if (err) {
-          console.log("ERR: " + err);
+//     //pass in and run the commands
+//     redis.batch(commands)
+//       .exec(function (err, replies) {
+//         if (err) {
+//           console.log("ERR: " + err);
 
-          return res.status(500)
-            .json({
-              status: 'error',
-              message: 'Some resets in redis failed.'
-            });
-        } else {
-          console.log("Success in setting to 0.");
-          //success
-          return res.status(200)
-            .json({
-              status: 'success',
-              message: 'Successfully reset counters for all users in redis.'
-            });
+//           return res.status(500)
+//             .json({
+//               status: 'error',
+//               message: 'Some resets in redis failed.'
+//             });
+//         } else {
+//           console.log("Success in setting to 0.");
+//           //success
+//           return res.status(200)
+//             .json({
+//               status: 'success',
+//               message: 'Successfully reset counters for all users in redis.'
+//             });
 
-        }
-      });
+//         }
+//       });
 
-  });
-});
+//   });
+// });
 
 /**
  * @api {get} /auth/removeall Empty Redis
@@ -811,7 +810,7 @@ let cursor = '0';
 
 function scan(pattern, keys, callback) {
 
-  redis.scan(cursor, 'MATCH', pattern, 'COUNT', '1000', function (err, reply) {
+  redis.scan(cursor, 'MATCH', pattern, 'COUNT', '2000', function (err, reply) {
     if (err) {
       throw err;
     }

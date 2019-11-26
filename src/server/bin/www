@@ -18,7 +18,7 @@ let port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 let server = null;
-if(process.env.USE_HTTPS.toLowerCase() === 'true'){
+if (process.env.USE_HTTPS.toLowerCase() === 'true') {
   /**
    * Create HTTPS server.
    */
@@ -31,7 +31,7 @@ if(process.env.USE_HTTPS.toLowerCase() === 'true'){
   };
 
   server = https.createServer(options, app);
-}else{
+} else {
   /**
    * Create HTTP server.
    */

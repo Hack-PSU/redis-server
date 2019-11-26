@@ -325,17 +325,17 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
  * @apiName ScanData
  * @apiGroup Scanner
  * @apiDescription
- * Store and log scan location, wid tag and timestamp. Verify if user is allowed to enter, and send response back.
+ * Store and log scan event, wid tag and timestamp. Verify if user is allowed to enter, and send response back.
  * Redis will also send the scan data to the main server asynchronously. Scanners will not find out if those requests will succeed or fail.
  * @apiPermission Scanner
  *
- * @apiParam {Number} wid        Wristband ID of user.
- * @apiParam {Number} location  Location id that scan occurred at. (Set id's in admin app)
+ * @apiParam {Number} wid       Wristband ID of user.
+ * @apiParam {String} event     Event id that scan occurred at.
  * @apiParam {String} apikey    API key for scanner to authenticate.
  * @apiParamExample {json} Request Body Example
  *     {
  *       wid: 1695694065,
- *       location: 3,
+ *       event: "ac68ca354ad1427c8cf9875bef518436",
  *       apikey: "0f865521-2c05-467d-ad43-a9bac2108db9"
  *     }
  *
@@ -387,20 +387,20 @@ router.post('/getpin', helpers.ensureScannerAuthenticated, function (req, res, n
  *
  */
 router.post('/scan', helpers.ensureScannerAuthenticated, asyncMiddleware( async function (req, res, next) {
-  if(!req.body || !req.body.location || !req.body.wid){
-    console.error("Invalid values passed for location or id");
-    let err = new Error("Invalid values passed for location or wid");
+  if(!req.body || !req.body.event || !req.body.wid){
+    console.error("Invalid values passed for event or wid");
+    let err = new Error("Invalid values passed for event or wid");
     err.status = 400;
     return next(err);
   }
 
-  let location = req.body.location;
+  let eventId = req.body.event;
   let userRFID = req.body.wid;
 
   //setup sending to server asynchronously
   let scan = {
     "wid": userRFID.toString(),
-    "scan_event": location.toString(),
+    "scan_event": eventId.toString(),
     "scan_time": Date.now()
   };
   let options = helpers.clone(serverOpt);
@@ -415,7 +415,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, asyncMiddleware( async 
         message: 'Redis database is down'
       });
   }
-  //They haven't registered and it'll still go through but make a seperate location for this.
+  //They haven't registered and it'll still go through but make a separate location for this.
   //need to throw an error that doesn't exist
   //redis.hget(tabKey, "numProducts", function (err, reply) {
   //add to redis
@@ -435,11 +435,11 @@ router.post('/scan', helpers.ensureScannerAuthenticated, asyncMiddleware( async 
             message: 'Does not exist.'
           });
       } else {
-        //check location
-        let event = await redisAsyncGetAll(location);
+        //check event
+        let event = await redisAsyncGetAll(eventId);
         if (!event){
-          console.error("Invalid value passed for location ");
-          let err = new Error("Invalid value passed for location");
+          console.error("Invalid value passed for event ");
+          let err = new Error("Invalid value passed for event");
           err.status = 401;
           return next(err);
         }
@@ -459,15 +459,15 @@ router.post('/scan', helpers.ensureScannerAuthenticated, asyncMiddleware( async 
                 message: 'Something went wrong'
               });
           } else {
-            console.log("Incrementing "+incrementedKey+" counter");
+            console.log("Incrementing " + incrementedKey + " counter");
             if (obj) {
               if (incrementedKey === "numScans"){
                 let numScans = parseInt(obj.toString()) - 1;
-                let scanLocKey = "Scan." + numScans + ".location";
+                let scanEventKey = "Scan." + numScans + ".event";
                 let scanTimeKey = "Scan." + numScans + ".time";
                 let data = {};
                 let date = scan.scan_time;
-                data[scanLocKey] = location;
+                data[scanEventKey] = eventId;
                 data[scanTimeKey] = date;
                 redis.hmset(userRFID, data, function (err, reply) {
                   // reply is null when the key is missing
@@ -525,7 +525,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, asyncMiddleware( async 
               scans: unsent_scans
             };
             console.log("UNSENT SCANS: " + JSON.stringify(options.body));
-            //todo:worry about promises and mutli data usage
+            //todo:worry about promises and multi data usage
             /*
               200 if everything is success
               207 if partial failure
@@ -577,7 +577,7 @@ router.post('/scan', helpers.ensureScannerAuthenticated, asyncMiddleware( async 
 
 
 /**
- * @api {post} /scanner/user-info Get User Info with Wristband tag
+ * @api {get} /scanner/user-info Get User Info with Wristband tag
  * @apiVersion 2.3.0
  * @apiName Get User
  * @apiGroup Scanner

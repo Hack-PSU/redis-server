@@ -51,22 +51,32 @@ if (process.env.NODE_ENV !== 'test') {
   let logger = morgan('combined');
   app.use(logger);
 }
+
+// *** parse requests as json or from url *** //
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({extended: true}));
+
+// *** config session metadata middleware *** //
 app.use(cookieParser());
 app.use(session({
   secret: process.env.SECRET_KEY || 'change_me',
   resave: false,
   saveUninitialized: true
 }));
+
+// *** setup flash message system *** //
 app.use(flash());
 app.use(function (req, res, next) {
   res.locals.success = req.flash('success');
   res.locals.danger = req.flash('danger');
   next();
 });
+
+// *** setup passport with persistance *** //
 app.use(passport.initialize());
 app.use(passport.session());
+
+// *** configure static content directory *** //
 app.use(express.static(path.join(__dirname, '../', 'client')));
 
 

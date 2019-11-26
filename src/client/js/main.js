@@ -22,7 +22,7 @@ $(document).ready(function() {
                 //$('#product-response').text('Yay! Product Removed!');
             })
             .fail(function() {
-                $('#product-response').text('Yike! Remvoing Something went wrong.');
+                $('#product-response').text('Yike! Removing Something went wrong.');
             });
         $('#product-name').val('');
         $('#product-price').val('');
