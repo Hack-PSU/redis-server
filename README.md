@@ -98,21 +98,45 @@ Here are the variables that we currently use in our codebase:
 
 | Variable  | Purpose/Explanation | Possible Values |
 | --------- | ------------------- | --------------- |
-| SECRET_KEY  | Random string used to sign the session ID cookie. This should be as unidentifiable as possible. | String |
+| SECRET_KEY  | Random string used to sign the session ID cookie. This allows for encryption of the sessions for each user. This should be as unidentifiable as possible. | String |
 | NODE_ENV | The current use case of the whole application. Change this value when you're testing this or developing this instead of running this in full production.  | test/development/stage |
 | SECRET | Used to sign JWT (JSON Web Tokens) tokens for authentication. Make this as random as possible. | String |
 | PORT | The port that this application will run on. | Number *(i.e: 80, 443, 3000, 8080)* |
 | SERVER_HOSTNAME | Redis server acts as a cache for your main API server handling your data. This is the variable that contains the URL of the server you ultimately hope to get and send your requests to. | URL *(i.e: https://api.hackpsu.org)*|
 | SERVER_PORT | The port your main API server is running on. Sometimes when you run the API directly on your computer this port may change from 443 to 5000. This gives you the opportunity to handle that. | Number *(i.e: 80, 443, 3000, 8080) |
 | SERVER_VERSION | This variable details the version of code your main API server is running. Your main API server could be running multiple versions, each hosted on the same hostname but a different route (i.e */v1/* vs */v2/*). | Route *(i.e: v1, v2, v3, ...)* |
-| SERVER_API_KEY | This is the API_KEY that you'll use to authenticate yourself to your main API server. | String |
-| FOOD | This is the number that represents the location ID for food events so we can understand if people have been trying to get a second serving before others have gotten a first. | Number (Integer for location ID) |
+| SERVER_API_KEY | This is the API_KEY that you'll use to authenticate yourself to your main API server. | String (i.e: For firestore, found under Database->Cloud Firestore->apikey)|
+| FOOD | This is the number that represents the location ID for food events so we can understand if people have been trying to get a second serving before others have gotten a first. | Number (Integer for location ID) *(currently under development, food events are read from event objects)*|
 | MONGOLAB_URI | This is the URL that you would use in production/stage to connect to mongodb | URL (i.e: mongodb://localhost/node-redis-hackpsu) |
 | USE_HTTPS | This is a true/false flag that identifies if we will be running this using https or not. To learn more on how to set this up read [HTTPS.md](src/server/bin/keys/HTTPS.md). | true/false |
 | SSL_KEY_PASS | This is the password that was used to generate the private key for the SSL cert that is used for HTTPS. To learn more on how to set this works, read [HTTPS.md](src/server/bin/keys/HTTPS.md) | String |
-| SCANNER_ADMIN_PIN | This is the pin that we use to authenticate scanners when they connect to redis server and try to get an API_KEY. Scanners will not be able to get an api key without this pin. | String |
 | ADMIN_PASS | This is the password to login into the ad@min.com user that is the default admin of the redis-server. | String |
 | ADMIN_EMAIL | This is the email to create the admin user account that is the default admin of the redis-server. | String (usually ad@min.com) |
+<!-- | SCANNER_ADMIN_PIN | This is the pin that we use to authenticate scanners when they connect to redis server and try to get an API_KEY. Scanners will not be able to get an api key without this pin. | String | -->
+
+## Button Functions
+| Button | Function |
+| ------ | -------- |
+| Updatedb | With the main api url as: SERVER_HOSTNAME:SERVER_PORT/SERVER_VERSION, /scanner/registration is queried and the data is added to the redis database with the key ebing their pin number. The route scanner/events is also queried and the event uid is the key (the long version). An example configuration would be api.hackpsu.org:80/v2/scanner/registrations. It sends the request along with an api token which it gets from the other firebase configurations |
+| Reset Food Counter | Currently resets the food counter for the first 1000 people |
+| Reset DB | Pulls user data from the database and adds users that have not been assigned an RFID tag. Additionally, it will re-add existing users with RFID tags with their tag as their key. *Currently under development*|
+| Flush Redis | Deletes all user and event information from redis |
+| Flush Scanners | Deletes all existing scanners from MongoDB |
+
+## Structure
+There are two databases and a web server:
+1. MongoDB - Holds scanner data and any user profiles signed in to the web server
+1. Redis - Holds hacker data and events
+1. Web server - Handles requests and serves data
+
+## Flow of data
+1. Match route
+1. Check authorization
+1. Complete redis functions
+1. Build response
+1. Return response
+1. Change view
+
 ## Documentation
 Documentation is stored in the `doc/` folder. To view it, open the 
 `index.html` file inside the folder using a browser. 
